@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta http-equiv="refresh" content="10">
+<link href='https://fonts.googleapis.com/css?family=Open Sans' rel='stylesheet'>
+<style>
+    /* Change color of anchor links within elements with the class "custom-links" */
+    .custom-links a {
+        color: white; /* Change this to your desired color */
+    }
+
+    /* Change color of a specific anchor link by using an ID */
+    #special-link {
+        color: white; /* Change this to your desired color */
+    }
+</style>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='all-study-view-styles.css') }}">
+    <style>
+    body {
+        font-family: 'Open Sans',sans-serif;
+        margin: 20px 50px 50px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      /* Remove the next line if you want the span to appear next to the h1 */
+      justify-content: center;
+    }
+    </style>
+    <meta charset="UTF-8">
+    <title>PIPNet All Study View</title>
+</head>
+
+<body style="background-color:black;">
+    <header class="bb" style="text-align: center; color: white">
+        <h1>Viewing all studies on Hip Fracture by PIPNet</h1>
+    </header>
+    <div class="study-table-div">
+        <table class="study-table">
+            <tr>
+                <th>Accession Number</th>
+                <th>Study Description</th>
+                <th>Study Date</th>
+                <th>Predicted class</th>
+                <th>RADPEER score</th>
+                <th>Study comment </th>
+            </tr>
+            {% if not studies %}
+            <tr>
+                <td colspan="6">No studies found</td>
+            </tr>
+            {% endif %}
+            {% for study in studies %}
+            <tr onclick="redirectToStudy('{{study.accession_number}}')">
+                <td>{{study.accession_number}}</td>
+                <td>{{study.study_description}}</td>
+                <td>{{study.study_date}}</td>
+                <td>{{study.predicted_class.value}}</td>
+                <td>{{study.RADPEER_score}}</td>
+                <td>{{study.study_comment}}</td>
+            </tr>
+
+            {% endfor %}
+
+    </table>
+
+    </div>
+    <script src="{{ url_for('static', filename='all-study-view.js') }}"></script>
+
+</body>
+</html>

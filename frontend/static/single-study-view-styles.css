@@ -1,0 +1,207 @@
+.app {
+    display: grid;
+    grid-template-columns: 20% auto 40%; /* Sidebar takes 20% and main content takes the remaining space */
+    min-height: 100vh;
+    color: white;
+    align-items: center; /* Vertically center-align content */
+}
+
+.sidebar {
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 672px; /* Adjust the maximum width as needed */
+    overflow-y: auto; /* Add scrolling for overflow content */
+    max-width: 350px;
+    text-align: center;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 10px;
+    margin: 0;
+    align-items: center; /* Vertically center-align content */
+    display: flex; /* Use flexbox to center-align buttons */
+    flex-direction: column; /* Align buttons vertically */
+}
+
+.sidebar li {
+    margin-bottom: 10px;
+}
+
+.sidebar button {
+    cursor: pointer;
+    padding: 5px 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 15px;
+    width: 280px;
+}
+
+.sidebar button.active {
+    background-color: #3498db; /* Change to the desired highlight color */
+    color: white;
+    font-weight: bold;
+}
+
+.sidebar-header {
+    display: flex; /* Use flexbox to align content */
+    justify-content: center; /* Horizontally center-align content */
+    align-items: center; /* Vertically center-align content */
+
+}
+.image {
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column; /* Change to column layout */
+    align-items: flex-start; /* Align content to the start (left) */
+}
+
+.image-display {
+
+    border: 1px solid #ccc;
+    text-align: center;
+    /*margin-top: 0; !* Reset margin-top *!*/
+}
+
+/* Increase the image size */
+#x-ray-image {
+    width: 672px;
+    height: 672px; /* Adjust the maximum height as needed */
+}
+.comment-section {
+    display: grid; /* Hide the comment section by default */
+    margin-top: 20px;
+    flex-direction: column;
+    align-items: center;
+    width: 672px;
+    grid-template-rows: 50% auto; /
+    justify-items: center; /* Center horizontally */
+    height: 200px
+}
+
+.comment-input {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.radpeer-score-input {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+}
+
+.radpeer-score-header, .comment-header {
+    font-size: 20px;
+}
+
+.radpeer-score-input label {
+    margin-right: 30px; /* Increase spacing between radio buttons */
+    font-size: 20px;
+}
+
+.radpeer-score-input input[type="radio"] {
+    /* Increase clickable area */
+    width: 20px;
+    height: 20px;
+    transform: scale(1.4); /* Increase the size of the circle */
+    margin-right: 7px;
+}
+
+.radio-label {
+    font-size: 16px;
+}
+
+
+.right-sidebar{
+    /*display: grid;*/
+    /*grid-template-columns: 80% 20%; !* Sidebar takes 20% and main content takes the remaining space *!*/
+    flex: 0 0 200px; /* Set a fixed width for the right sidebar */
+    border: 1px solid #ccc;
+    padding: 20px;
+    height: 672px;
+    display: grid;
+    grid-template-rows: 70% auto; /* Sidebar takes 20% and main content takes the remaining space */
+
+}
+.comment-input-section {
+    /*border: 1px solid #ccc;*/
+    width: 572px;
+    display: grid;
+    grid-template-columns: 30% auto; /* Sidebar takes 20% and main content takes the remaining space */
+    align-items: center;
+    padding-left: 50px;
+    padding-right: 50px;
+    /*justify-content: center;*/
+}
+.radpeer-score {
+    display: grid;
+    grid-template-columns: 30% auto; /* Sidebar takes 20% and main content takes the remaining space */
+    /*width: 500px;*/
+    align-items: center;
+    justify-content: center;
+    /*border: 1px solid #ccc;*/
+    padding-left: 50px;
+
+}
+
+.input-section {
+    flex-direction: column;
+    /*align-items: center;*/
+    /*justify-content: center;*/
+    display: grid;
+    grid-template-columns: 80% auto; /* Sidebar takes 20% and main content takes the remaining space */
+    width: 672px;
+
+}
+.save-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.prototype-bar {
+    /*border: 1px solid #ccc;*/
+    /*padding: 10px;*/
+    /*display: flex;*/
+    flex-direction: column;
+    justify-content: center;
+    /*height: 658px; !* Adjust the maximum width as needed *!*/
+    overflow-y: auto; /* Add scrolling for overflow content */
+    max-width: 672px;
+}
+
+.prototype-table {
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+
+.prototype-table th,
+.prototype-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+.prototype-header {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+}
+
+.all-studies-button {
+    cursor: pointer;
+    padding: 5px 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 15px;
+    width: 280px;
+
+}

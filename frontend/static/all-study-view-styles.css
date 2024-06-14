@@ -1,0 +1,37 @@
+
+.study-table {
+    width: 100%;
+    /*border: 1px solid #ddd;*/
+    font-size: 18px;
+    color: white;
+    justify-content: center;
+    align-content: center;
+    border-collapse: collapse;
+
+}
+
+.study-table  th {
+    border: 1px solid white; /* Add a 1px solid black border to headers */
+    color: white;
+    text-align: center;
+}
+
+/* Set font color of table data cells (td) to white */
+.study-table td {
+    border: 1px solid white; /* Add a 1px solid black border to headers */
+    color: white;
+    text-align: center;
+}
+
+.study-table tr:not(:first-child):hover {
+    background-color: #3498db; /* Change to the desired highlight color */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    height: 50px;
+}
+
+.study-table tr {
+    height: 40px;
+
+}

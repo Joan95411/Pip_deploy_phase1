@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<link href='https://fonts.googleapis.com/css?family=Open Sans' rel='stylesheet'>
+
+<style>
+    /* Change color of anchor links within elements with the class "custom-links" */
+    .custom-links a {
+        color: white; /* Change this to your desired color */
+    }
+
+    /* Change color of a specific anchor link by using an ID */
+    #special-link {
+        color: white; /* Change this to your desired color */
+    }
+</style>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='single-study-view-styles.css') }}">
+    <style>
+    body {
+        font-family: 'Open Sans',sans-serif;
+        margin: 20px 50px 50px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      /* Remove the next line if you want the span to appear next to the h1 */
+      justify-content: space-between;
+    }
+    </style>
+    <meta charset="UTF-8">
+    <title style="color: white; ">Study {{ study.accession_number }}</title>
+</head>
+
+<body style="background-color:black;">
+    <header class="bb" style="text-align: left; color: white">
+        <h1>Study {{study.accession_number}}</h1>
+        <span>Date: {{study.study_date}}</span>
+        <span>Predicted class: {{study.predicted_class.value}}</span>
+        <span>Description: {{study.study_description}}  </span>
+        <button class="all-studies-button" onclick="backToAllStudies()"> <a>Back to all studies</a></button>
+    </header>
+    <div class="app" >
+<!--            <b>{{ study.series[0].images[0].fractured_annotated_image_dir }}</b>-->
+        <div class="sidebar">
+            <h2 class="styles.css">Images in this study</h2>
+            <ul>
+                {% for series in study.series %}
+                    <li>
+<!--                         NOTE: THIS NOW ASSUME EACH SERIES ONLY HAVE ONE IMAGE-->
+                        <div data-value='{{series.images[0].fractured_annotated_image_dir}}'></div>
+                        <button onclick="displayPrototypesAndImages('{{ series.images[0].prototypes_to_json()}}','{{ series.images[0].fractured_annotated_image_dir }}')">
+                         <b>{{ series.images[0].image_uid[-7:] }}</b> <br>
+                            Predicted class: {{series.images[0].predicted_class.value}} <br>
+                            Fractured weight: {{series.images[0].fractured_sim_weight}} <br>
+                            Non-fractured weight: {{series.images[0].non_fractured_sim_weight}}
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="image" >
+            <div class="image-display">
+                <img id="x-ray-image" src="" alt="">
+            </div>
+        </div>
+        <div class="right-sidebar">
+            <div class="prototype-bar", id="prototypes-bar">
+                <h2 class="prototype-bar-header">List of prototypes will appear here after an image is chosen.</h2>
+            </div>
+            <div class="comment-section">
+                    <div class="comment-input-section">
+                        <h5 class="comment-header">Comment on this study:</h5>
+                        <input type="text" id="comment-input" class="comment-input" style=" width: 420px; height: 50px" placeholder="Comment on this study">
+                    </div>
+
+                <div class="input-section">
+                    <div class="radpeer-score">
+                        <h5 class="radpeer-score-header">RADPEER score:</h5>
+                        <div class="radpeer-score-input">
+                            <label><input type="radio" name="rating" value="1">1</label>
+                            <label><input type="radio" name="rating" value="2">2</label>
+                            <label><input type="radio" name="rating" value="3">3</label>
+                            <label><input type="radio" name="rating" value="4">4</label>
+                            <label><input type="radio" name="rating" value="5">5</label>
+                        </div>
+                    </div>
+                    <div class="save-section">
+                    <button id="save-button" style=" width: 100px; height: 50px; align-self: center; padding: 10px"
+                            accession_number="{{study.accession_number}}">SAVE</button>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='single-study-view.js') }}"></script>
+</body>
+</html>
