@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw as D
 import torchvision.transforms as transforms
 import statistics
 import torchvision
-from util.func import get_patch_size
+from backend.util.func import get_patch_size
 import random
 
 

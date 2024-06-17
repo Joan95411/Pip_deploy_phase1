@@ -1,5 +1,5 @@
-from pipnet.pipnet import PIPNet, get_network
-from util.args import get_args, get_optimizer_nn
+from backend.pipnet.pipnet import PIPNet, get_network
+from backend.util.args import get_args, get_optimizer_nn
 import torch.nn as nn
 import torchvision.transforms as transforms
 import torchvision

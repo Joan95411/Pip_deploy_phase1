@@ -1,7 +1,7 @@
 import os
 import shutil
 from PIL import Image
-from shutil import copyfile
+from mysql.connector import Error
 import mysql.connector
 from InferenceResult import HipFractureStudy, HipFractureSeries, HipFractureImage, HipFractureEnum
 import xml.etree.ElementTree as ElementTree
@@ -226,22 +226,6 @@ class PukkaJDirectoryObserver:
             print(f"Directory detected: {directory}")
             self.process_directory(directory,filename)
 
-    # def process_directory(self, directory):
-    #     image_metadata_dict = get_image_metadata(directory)
-    #     study = create_study(list(image_metadata_dict.values()), directory)
-    #     series_dict = {key: create_series(val, directory) for key, val in image_metadata_dict.items()}
-    #     create_series_directory(directory, list(image_metadata_dict.values()))
-    #     create_images_directory(directory, list(image_metadata_dict.values()))
-    #     create_prototypes_directory(directory, list(image_metadata_dict.values()))
-    #     move_images_and_xml_to_image_directory(directory, directory, list(image_metadata_dict.values()))
-    #     for key, val in image_metadata_dict.items():
-    #         series_image_dir = os.path.join(directory, val.series_instance_uid, val.image_uid)
-    #         series_image_name = val.image_uid + ".jpg"
-    #         hip_fracture_image = self.image_inference(series_image_dir, series_image_name)
-    #         series_dict[key].add_image(hip_fracture_image)
-    #     for key, series in series_dict.items():
-    #         study.add_series(series)
-    #     self.write_to_database(study)
 
     def process_directory(self, directory,filename):
         # Get the metadata for images in the directory
@@ -251,9 +235,8 @@ class PukkaJDirectoryObserver:
             os.makedirs(study_path)
         # Create a study instance using the metadata
         study = create_study(list(image_metadata_dict.values()), directory)
-        # Create a dictionary of series instances
+
         series_dict = {key: create_series(val, directory) for key, val in image_metadata_dict.items()}
-        # Create necessary subdirectories
         create_series_directory(study_path, list(image_metadata_dict.values()))
         create_images_directory(study_path, list(image_metadata_dict.values()))
         create_prototypes_directory(study_path, list(image_metadata_dict.values()))
@@ -264,36 +247,49 @@ class PukkaJDirectoryObserver:
         for key, val in image_metadata_dict.items():
             series_image_dir = os.path.join(study_path, val.series_instance_uid, val.image_uid)
             series_image_name = val.image_uid + ".jpg"
-            print(series_image_dir,series_image_name)
             hip_fracture_image = self.image_inference(series_image_dir, series_image_name)
             series_dict[key].add_image(hip_fracture_image)
         for key, series in series_dict.items():
             study.add_series(series)
         self.write_to_database(study)
 
-    def write_to_database(self, study: HipFractureStudy):
-        cursor = self.study_database.cursor()
-        if self.test:
-            cursor.execute("USE hip_fracture_study_test")
-        else:
-            cursor.execute("USE hip_fracture_study")
-        sql_study, val_study = get_study_sql_query(study)
-        cursor.execute(sql_study, val_study)
 
-        for series in study.series:
-            sql_series, val_series = get_series_sql_query(series, study.study_instance_uid)
-            cursor.execute(sql_series, val_series)
-            for image in series.images:
-                sql_image, val_image = get_images_sql_query(image, series.series_instance_uid)
-                cursor.execute(sql_image, val_image)
-                for prototype in image.prototypes:
-                    sql_prototype, val_prototype = get_prototypes_sql_query(prototype, image.image_uid)
-                    cursor.execute(sql_prototype, val_prototype)
-        self.study_database.commit()
+
+    def write_to_database(self, study: HipFractureStudy):
+        try:
+            cursor = self.study_database.cursor()
+            if self.test:
+                cursor.execute("USE hip_fracture_study_test")
+            else:
+                cursor.execute("USE hip_fracture_study")
+
+            sql_study, val_study = get_study_sql_query(study)
+            cursor.execute(sql_study, val_study)
+
+            for series in study.series:
+                sql_series, val_series = get_series_sql_query(series, study.study_instance_uid)
+                cursor.execute(sql_series, val_series)
+                for image in series.images:
+                    sql_image, val_image = get_images_sql_query(image, series.series_instance_uid)
+                    cursor.execute(sql_image, val_image)
+                    for prototype in image.prototypes:
+                        sql_prototype, val_prototype = get_prototypes_sql_query(prototype, image.image_uid)
+                        cursor.execute(sql_prototype, val_prototype)
+
+            self.study_database.commit()
+
+        except mysql.connector.Error as err:
+            if err.errno == 1062:  # MySQL error code for duplicate entry
+                print(f"Skipping duplicate entry: {err}")
+                self.study_database.rollback()  # Rollback the transaction
+            else:
+                print(f"Error: {err}")
+                self.study_database.rollback()  # Rollback the transaction
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
 
 
 if __name__ == "__main__":
     observer = PukkaJDirectoryObserver(LISTENING_PATH)
-    while True:
-        input("Press Enter to analyze files in the listening directory...")
-        observer.analyze()
+    observer.analyze()

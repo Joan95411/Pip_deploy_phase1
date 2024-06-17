@@ -2,10 +2,10 @@ import os, shutil
 import argparse
 from PIL import Image, ImageDraw as D
 import torchvision
-from util.func import get_patch_size
+from backend.util.func import get_patch_size
 from torchvision import transforms
 import torch
-from util.vis_pipnet import get_img_coordinates
+from backend.util.vis_pipnet import get_img_coordinates
 
 
 def vis_pred(net, vis_test_dir, classes, device, args: argparse.Namespace):

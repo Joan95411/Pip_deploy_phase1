@@ -1,6 +1,3 @@
-import os
-from typing import Tuple, List
-
 import torch
 from PIL import Image
 from torchvision import transforms
