@@ -17,6 +17,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
 
 
+
 app = Flask(__name__)
 app.secret_key = "superSecretKey"
 
@@ -43,7 +44,6 @@ class NoImageException(Exception):
 @app.route('/')
 def homepage():
     return render_template('all-study-view.html', studies=fetch_all_studies())
-
 def get_study_dao(study):
     studyDAO = StudyDAO(
         study_instance_uid=study[0],
@@ -191,16 +191,15 @@ def browse_all_study():
     return render_template('all-study-view.html', studies=fetch_all_studies())
 
 
-@app.route('/<path:path>')
+@app.route('/image/<path:path>')
 def serve_image(path):
-    cleaned_path = path.lstrip('image/')
+    cleaned_path = path.lstrip('/image/')
 
     # Construct the full path to the image
     image_path = os.path.join(BASE_DIR, cleaned_path)
 
     print(image_path)
     return send_from_directory(os.path.dirname(image_path), os.path.basename(image_path))
-
 
 
 @app.route("/study/flag_error/<prototype_uid>", methods=['PATCH'])
@@ -221,18 +220,18 @@ def patch(prototype_uid):
 #
 # @app.route('/study/flag_error/<prototype_uid>}', methods=["PATCH"])
 # def flag_prototype_error(prototype_uid):
-#     cursor = study_database.cursor(buffered=True)
-#     cursor.execute("USE hip_fracture_study")
-#     sql = "UPDATE prototypes SET flagged_error = 1 WHERE prototype_uid = %s"
-#     val = tuple(prototype_uid)
-#     try:
-#         cursor.execute(sql, val)
-#         study_database.commit()
-#     except Exception as e:
-#         print("An error occurred in the process of ", e)
-#         study_database.rollback()
-#         return Response(status=500)
-#     return Response(status=200)
+# 	cursor = study_database.cursor(buffered=True)
+# 	cursor.execute("USE hip_fracture_study")
+# 	sql = "UPDATE prototypes SET flagged_error = 1 WHERE prototype_uid = %s"
+# 	val = tuple(prototype_uid)
+# 	try:
+#     	cursor.execute(sql, val)
+#     	study_database.commit()
+# 	except Exception as e:
+#     	print("An error occurred in the process of ", e)
+#     	study_database.rollback()
+#     	return Response(status=500)
+# 	return Response(status=200)
 
 
 @app.route('/study/<accessionNumber>/save', methods=["POST"])
