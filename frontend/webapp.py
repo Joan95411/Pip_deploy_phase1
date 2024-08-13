@@ -44,6 +44,7 @@ class NoImageException(Exception):
 @app.route('/')
 def homepage():
     return render_template('all-study-view.html', studies=fetch_all_studies())
+
 def get_study_dao(study):
     studyDAO = StudyDAO(
         study_instance_uid=study[0],
@@ -193,13 +194,18 @@ def browse_all_study():
 
 @app.route('/image/<path:path>')
 def serve_image(path):
-    cleaned_path = path.lstrip('/image/')
+    if not path.startswith('//'):
+        path = '/' + path
+    #6003156567
+    # Print the final path for debugging
+    print("Final image path:", path)
 
-    # Construct the full path to the image
-    image_path = os.path.join(BASE_DIR, cleaned_path)
+    # Serve the file using the correct directory and file name
+    return send_from_directory(os.path.dirname(path), os.path.basename(path))
+    # image_path = path
 
-    print(image_path)
-    return send_from_directory(os.path.dirname(image_path), os.path.basename(image_path))
+    # print(image_path)
+    # return send_from_directory(os.path.dirname(image_path), os.path.basename(image_path))
 
 
 @app.route("/study/flag_error/<prototype_uid>", methods=['PATCH'])
@@ -216,6 +222,7 @@ def patch(prototype_uid):
         study_database.rollback()
         return Response(status=500)
     return Response(status=200)
+
 
 
 @app.route('/study/<accessionNumber>/save', methods=["POST"])
@@ -241,6 +248,6 @@ def save_comment(accessionNumber):
 
 if __name__ == "__main__":
     try:
-        app.run(debug=True)
+        app.run(host='0.0.0.0',port=5000,debug=True)
     except KeyboardInterrupt:
         study_database.close()
