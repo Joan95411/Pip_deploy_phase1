@@ -251,6 +251,7 @@ class PukkaJDirectoryObserver:
             series_dict[key].add_image(hip_fracture_image)
         for key, series in series_dict.items():
             study.add_series(series)
+        study.get_predicted_class()
         self.write_to_database(study)
 
 

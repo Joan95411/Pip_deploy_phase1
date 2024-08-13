@@ -18,7 +18,9 @@ function customAlert(msg,duration)
 
 async function displayPrototypesAndImages(prototypes_json, fracturedImagePath) {
     await displayImage( fracturedImagePath);
-    await displayPrototypes(prototypes_json);
+    await displayPrototypes(prototypes_json,fracturedImagePath);
+    const normalizedPath = fracturedImagePath.replace(/\\/g, '/');
+    console.log('Normalized fracturedImagePath:', normalizedPath);
 }
 
 function flagErrorToDatabase(prototype_uid) {
@@ -44,7 +46,7 @@ function flagErrorToDatabase(prototype_uid) {
     });
 }
 
-async function displayPrototypes(prototypes_json) {
+async function displayPrototypes(prototypes_json,fracturedImagePath) {
 
     const prototypes = JSON.parse(prototypes_json); // Parse the JSON string into an array
     const prototypesBar = document.getElementById('prototypes-bar');
@@ -76,7 +78,15 @@ async function displayPrototypes(prototypes_json) {
 
         const dataRow = prototypeTable.insertRow();
         const dataCellID = dataRow.insertCell();
-        dataCellID.textContent = prototype.prototype_index;
+        // dataCellID.textContent = prototype.prototype_index;
+        const indexButton = document.createElement('button');
+        indexButton.textContent = prototype.prototype_index;
+        // Add a click event listener to the index button
+        indexButton.addEventListener('click', function () {
+            displayPrototypeImage(prototype.prototype_index,fracturedImagePath); // Call the function to display the image
+        });
+        dataCellID.appendChild(indexButton);
+
         const dataCellSimWeight = dataRow.insertCell();
         dataCellSimWeight.textContent = prototype.similarity_weight;
         const dataCellPredClass = dataRow.insertCell();
@@ -107,6 +117,33 @@ async function displayPrototypes(prototypes_json) {
 
     prototypesBar.appendChild(prototypeTable);
 });
+}
+// Function to display the prototype image
+async function displayPrototypeImage(prototypeIndex,fracturedImagePath) {
+    let fracturedImagePath3;
+    try {
+        const clickedButton = event.currentTarget;
+        // Remove the 'active' class from all buttons
+        const allButtons = document.querySelectorAll('.sidebar button');
+        allButtons.forEach(function (button) {
+            button.classList.remove('active');
+        });
+        const commentSection = document.querySelector('.comment-section');
+        // Add the 'active' class to the clicked button
+        clickedButton.classList.add('active');
+
+        const lastSlashIndex = fracturedImagePath.lastIndexOf('\\'); // Find the index of the last backslash
+        let basePath = fracturedImagePath.substring(0, lastSlashIndex + 1); // Get the base path up to and including the last backslash
+        fracturedImagePath3 = basePath + 'prototype_' + prototypeIndex + '.jpg'; // Append the prototype file name
+
+        const response = await fetch(`/image/${fracturedImagePath3}`);
+        const image = await response.blob(); // Retrieve image data as a blob
+        const selectedImage = document.getElementById('x-ray-image');
+        selectedImage.src = URL.createObjectURL(image); // Set image data as src
+
+    } catch (error) {
+        console.error('Error fetching image URL:', error);
+    }
 }
 async function displayImage(fracturedImagePath) {
     let fracturedImagePath2;

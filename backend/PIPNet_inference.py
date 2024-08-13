@@ -1,5 +1,6 @@
 import torch
 from PIL import Image
+from PIL import ImageDraw
 from torchvision import transforms
 
 from InferenceResult import HipFractureImage, HipFracturePrototype, HipFractureEnum
@@ -105,7 +106,7 @@ class PIPNetInference:
         transform_arg = self.get_transformation_arguments()
         image = transform_arg(img.convert('RGB'))
         softmax_layer, pooled_layer, output_layer = self.single_tensor_inference(image.unsqueeze_(0))
-        return self.get_prediction_images(softmax_layer, pooled_layer, output_layer, img, threshold)
+        return self.get_prediction_original_images(softmax_layer, pooled_layer, output_layer, img, threshold)
 
     def get_prediction_images(self,
                               softmax_layer: torch.Tensor,
@@ -137,6 +138,7 @@ class PIPNetInference:
                 pred_class = HipFractureEnum.Fractured
             else:
                 pred_class = HipFractureEnum.NonFractured
+
 
             for prototype_idx in sorted_pooled_indices:
                 sim_weight = pooled_layer[0, prototype_idx].item() * self.net.module._classification.weight[
@@ -172,3 +174,84 @@ class PIPNetInference:
                     prototype_list.append(prototype)
 
         return HipFractureImage(image, prototype_list)
+
+    def get_prediction_original_images(self,
+                              softmax_layer: torch.Tensor,
+                              pooled_layer: torch.Tensor,
+                              output_layer: torch.Tensor,
+                              img: Image.Image,
+                              threshold: float) -> HipFractureImage:
+        """
+        Returns the image with the predicted class and bounding box positions relative to the original image.
+        :param softmax_layer:
+        :param pooled_layer:
+        :param output_layer:
+        :param img:
+        :param threshold:
+        :return: HipFractureImage object containing bounding box positions relative to the original image.
+        """
+        patch_size, skip = self.args.get_patch_size()
+        prototype_list = []
+        sorted_output_layer, sorted_output_layer_indices = torch.sort(output_layer.squeeze(0), descending=True)
+        sorted_pooled, sorted_pooled_indices = torch.sort(pooled_layer.squeeze(0), descending=True)
+
+        # Resize input image to model's expected size for inference
+        image_resized = transforms.Resize(size=(self.args.get_arg('image_size'), self.args.get_arg('image_size')))(img)
+        img_tensor = transforms.ToTensor()(image_resized).unsqueeze_(0)
+
+        original_width, original_height = img.size
+        resized_width, resized_height = image_resized.size
+
+        for pred_class_idx in sorted_output_layer_indices:
+            if int(pred_class_idx) == 0:
+                pred_class = HipFractureEnum.Fractured
+            else:
+                pred_class = HipFractureEnum.NonFractured
+
+
+            for prototype_idx in sorted_pooled_indices:
+                sim_weight = pooled_layer[0, prototype_idx].item() * self.net.module._classification.weight[
+                    pred_class_idx, prototype_idx].item()
+
+                if sim_weight > threshold:
+                    max_h, max_idx_h = torch.max(softmax_layer[0, prototype_idx, :, :], dim=0)
+                    max_w, max_idx_w = torch.max(max_h, dim=0)
+                    max_idx_h = max_idx_h[max_idx_w].item()
+                    max_idx_w = max_idx_w.item()
+
+                    h_coor_min, h_coor_max, w_coor_min, w_coor_max = get_img_coordinates(
+                        self.args.get_arg('image_size'),
+                        softmax_layer.shape,
+                        patch_size,
+                        skip, max_idx_h, max_idx_w)
+                    # Calculate bounding box coordinates relative to the original image
+                    scale_w = original_width / resized_width
+                    scale_h = original_height / resized_height
+
+                    box_left = int(max_idx_w * skip* scale_w)
+                    box_top = int(max_idx_h * skip* scale_h)
+                    box_right = int(min(original_width, (max_idx_w* skip + patch_size) * scale_w))
+                    box_bottom = int(min(original_height, (max_idx_h* skip + patch_size) * scale_h))
+                    bbox = (box_left, box_top, box_right, box_bottom)
+                    # Ensure bounding box is within the image dimensions
+                    bbox = tuple(max(0, coord) for coord in bbox)
+                    rectangle = ((bbox[0], bbox[1]), (bbox[2], bbox[3]))
+
+                    similarity = pooled_layer[0, prototype_idx].item()
+
+                    img_with_box = img.copy()
+                    draw = ImageDraw.Draw(img_with_box)
+                    draw.rectangle([bbox[0], bbox[1], bbox[2], bbox[3]], outline="white", width=2)
+
+
+                    prototype = HipFracturePrototype(prototype_index=prototype_idx,
+                                                     predicted_class=pred_class,
+                                                     prototype_image=img_with_box,
+                                                     coordinates=rectangle,
+                                                     similarity_weight=sim_weight,
+                                                     similarity=similarity)
+                    prototype_list.append(prototype)
+
+        return HipFractureImage(img, prototype_list)
+
+

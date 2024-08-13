@@ -36,20 +36,20 @@
     <header class="bb" style="text-align: left; color: white">
         <h1>Study {{study.accession_number}}</h1>
         <span>Date: {{study.study_date}}</span>
-        <span>Predicted class: {{study.predicted_class.value}}</span>
+{#        <span>Predicted class: {{study.predicted_class.value}}</span>#}
         <span>Description: {{study.study_description}}  </span>
         <button class="all-studies-button" onclick="backToAllStudies()"> <a>Back to all studies</a></button>
     </header>
     <div class="app" >
 <!--            <b>{{ study.series[0].images[0].fractured_annotated_image_dir }}</b>-->
         <div class="sidebar">
-            <h2 class="styles.css">Images in this study</h2>
+            <h3 class="styles.css">Predicted class: {{study.predicted_class.value}}</h3>
             <ul>
                 {% for series in study.series %}
                     <li>
 <!--                         NOTE: THIS NOW ASSUME EACH SERIES ONLY HAVE ONE IMAGE-->
                         <div data-value='{{series.images[0].fractured_annotated_image_dir}}'></div>
-                        <button onclick="displayPrototypesAndImages('{{ series.images[0].prototypes_to_json()}}','{{ series.images[0].fractured_annotated_image_dir }}')">
+                        <button onclick="displayPrototypesAndImages('{{ series.images[0].prototypes_to_json() }}', '{{ series.images[0].fractured_annotated_image_dir.replace("\\", "\\\\") }}')">
                          <b>{{ series.images[0].image_uid[-7:] }}</b> <br>
                             Predicted class: {{series.images[0].predicted_class.value}} <br>
                             Fractured weight: {{series.images[0].fractured_sim_weight}} <br>

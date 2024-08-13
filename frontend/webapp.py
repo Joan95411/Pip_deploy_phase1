@@ -217,22 +217,6 @@ def patch(prototype_uid):
         return Response(status=500)
     return Response(status=200)
 
-#
-# @app.route('/study/flag_error/<prototype_uid>}', methods=["PATCH"])
-# def flag_prototype_error(prototype_uid):
-# 	cursor = study_database.cursor(buffered=True)
-# 	cursor.execute("USE hip_fracture_study")
-# 	sql = "UPDATE prototypes SET flagged_error = 1 WHERE prototype_uid = %s"
-# 	val = tuple(prototype_uid)
-# 	try:
-#     	cursor.execute(sql, val)
-#     	study_database.commit()
-# 	except Exception as e:
-#     	print("An error occurred in the process of ", e)
-#     	study_database.rollback()
-#     	return Response(status=500)
-# 	return Response(status=200)
-
 
 @app.route('/study/<accessionNumber>/save', methods=["POST"])
 def save_comment(accessionNumber):
