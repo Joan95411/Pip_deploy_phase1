@@ -132,7 +132,7 @@ async function displayPrototypeImage(prototypeIndex,fracturedImagePath) {
         // Add the 'active' class to the clicked button
         clickedButton.classList.add('active');
 
-        const lastSlashIndex = fracturedImagePath.lastIndexOf('\\'); // Find the index of the last backslash
+        const lastSlashIndex = fracturedImagePath.lastIndexOf('/'); // Find the index of the last backslash
         let basePath = fracturedImagePath.substring(0, lastSlashIndex + 1); // Get the base path up to and including the last backslash
         fracturedImagePath3 = basePath + 'prototype_' + prototypeIndex + '.jpg'; // Append the prototype file name
 
