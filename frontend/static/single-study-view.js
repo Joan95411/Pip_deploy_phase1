@@ -124,7 +124,7 @@ async function displayPrototypeImage(prototypeIndex,fracturedImagePath) {
     try {
         const clickedButton = event.currentTarget;
         // Remove the 'active' class from all buttons
-        const allButtons = document.querySelectorAll('.sidebar button');
+        const allButtons = document.querySelectorAll('.right-sidebar button');
         allButtons.forEach(function (button) {
             button.classList.remove('active');
         });
