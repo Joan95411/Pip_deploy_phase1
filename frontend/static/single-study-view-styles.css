@@ -40,7 +40,11 @@
     font-size: 15px;
     width: 280px;
 }
-
+.right-sidebar button.active {
+    background-color: #3498db; /* Change to the desired highlight color */
+    color: white;
+    font-weight: bold;
+}
 .sidebar button.active {
     background-color: #3498db; /* Change to the desired highlight color */
     color: white;
