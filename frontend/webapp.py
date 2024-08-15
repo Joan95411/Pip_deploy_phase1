@@ -207,7 +207,9 @@ def view_single_study(accessionNumber):
 
 @app.route("/study/all")
 def browse_all_study():
-    return render_template('all-study-view.html', studies=fetch_all_studies())
+    page = request.args.get('page', 1, type=int)
+    studyDAOs = fetch_page_studies(page)
+    return render_template('all-study-view.html', studies=studyDAOs,page=page)
 
 
 @app.route('/image/<path:path>')
