@@ -81,9 +81,10 @@ async function displayPrototypes(prototypes_json,fracturedImagePath) {
         // dataCellID.textContent = prototype.prototype_index;
         const indexButton = document.createElement('button');
         indexButton.textContent = prototype.prototype_index;
+        const predictClass=prototype.predicted_class.toLowerCase();
         // Add a click event listener to the index button
         indexButton.addEventListener('click', function () {
-            displayPrototypeImage(prototype.prototype_index,fracturedImagePath); // Call the function to display the image
+            displayPrototypeImage(prototype.prototype_index,fracturedImagePath,predictClass); // Call the function to display the image
         });
         dataCellID.appendChild(indexButton);
 
@@ -132,9 +133,12 @@ async function displayPrototypeImage(prototypeIndex,fracturedImagePath) {
         // Add the 'active' class to the clicked button
         clickedButton.classList.add('active');
 
-        const lastSlashIndex = fracturedImagePath.lastIndexOf('/'); // Find the index of the last backslash
-        let basePath = fracturedImagePath.substring(0, lastSlashIndex + 1); // Get the base path up to and including the last backslash
-        fracturedImagePath3 = basePath + 'prototype_' + prototypeIndex + '.jpg'; // Append the prototype file name
+        const lastSlashIndex = fracturedImagePath.lastIndexOf('\\'); // Find the index of the last backslash
+        let basePath = fracturedImagePath.substring(0, lastSlashIndex ); // Get the base path up to and including the last backslash
+        const lastSlashIndex1=basePath.lastIndexOf('\\');
+        let basePath1 = basePath.substring(0, lastSlashIndex1 + 1);
+        console.log(basePath1);
+        fracturedImagePath3 = basePath1+ predictClass +'/'+  'prototype_' + prototypeIndex + '.jpg'; // Append the prototype file name
 
         const response = await fetch(`/image/${fracturedImagePath3}`);
         const image = await response.blob(); // Retrieve image data as a blob
