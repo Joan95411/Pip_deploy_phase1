@@ -43,7 +43,9 @@ class NoImageException(Exception):
 
 @app.route('/')
 def homepage():
-    return render_template('all-study-view.html', studies=fetch_all_studies())
+    page = request.args.get('page', 1, type=int)
+    studyDAOs = fetch_page_studies(page)
+    return render_template('all-study-view.html', studies=studyDAOs,page=page)
 
 def get_study_dao(study):
     studyDAO = StudyDAO(
@@ -154,6 +156,22 @@ def fetch_all_studies():
     study_database.commit()
     return studyDAOs
 
+def fetch_page_studies(page):
+
+    per_page = 4  # Number of items per page
+    offset = (page-1) * per_page  # Calculate the offset
+    cursor = study_database.cursor(buffered=True)
+    cursor.execute("USE hip_fracture_study")
+
+    cursor.execute("SELECT * FROM study LIMIT %s OFFSET %s", (per_page, offset))
+    studies = cursor.fetchall()
+
+    studyDAOs = []
+    for study in studies:
+        studyDAOs.append(get_study_dao(study))
+
+    study_database.commit()
+    return studyDAOs
 
 @app.route('/study/<accessionNumber>')
 def view_single_study(accessionNumber):
