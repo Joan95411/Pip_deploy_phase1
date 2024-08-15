@@ -46,7 +46,7 @@ function flagErrorToDatabase(prototype_uid) {
     });
 }
 
-async function displayPrototypes(prototypes_json,fracturedImagePath,predictClass) {
+async function displayPrototypes(prototypes_json,fracturedImagePath) {
 
     const prototypes = JSON.parse(prototypes_json); // Parse the JSON string into an array
     const prototypesBar = document.getElementById('prototypes-bar');
@@ -120,7 +120,7 @@ async function displayPrototypes(prototypes_json,fracturedImagePath,predictClass
 });
 }
 // Function to display the prototype image
-async function displayPrototypeImage(prototypeIndex,fracturedImagePath) {
+async function displayPrototypeImage(prototypeIndex,fracturedImagePath,predictClass) {
     let fracturedImagePath3;
     try {
         const clickedButton = event.currentTarget;
