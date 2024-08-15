@@ -46,7 +46,7 @@ function flagErrorToDatabase(prototype_uid) {
     });
 }
 
-async function displayPrototypes(prototypes_json,fracturedImagePath) {
+async function displayPrototypes(prototypes_json,fracturedImagePath,predictClass) {
 
     const prototypes = JSON.parse(prototypes_json); // Parse the JSON string into an array
     const prototypesBar = document.getElementById('prototypes-bar');
