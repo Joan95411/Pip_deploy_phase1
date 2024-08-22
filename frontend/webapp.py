@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, request, render_template, send_from_directory, Response
+from flask import Flask, request, render_template, send_from_directory, Response, redirect, url_for
 import mysql.connector
 from SQLCredentials import SQLCredentials
 from StudyDAO import StudyDAO, SeriesDAO, ImageDAO, PrototypeDAO
@@ -172,7 +172,17 @@ def fetch_page_studies(page):
 
     study_database.commit()
     return studyDAOs
+    
+@app.route('/study/')
+def redirect_to_study():
+    accessionNumber = request.args.get('accessionNumber')
 
+    if not accessionNumber:
+        return "Accession number is required", 400
+
+    # Redirect to the original route
+    return redirect(url_for('view_single_study', accessionNumber=accessionNumber))
+    
 @app.route('/study/<accessionNumber>')
 def view_single_study(accessionNumber):
     cursor = study_database.cursor(buffered=True)
