@@ -36,10 +36,13 @@
 <body style="background-color:black;">
     <header class="bb" style="text-align: left; color: white">
         <h1>Study {{study.accession_number}}</h1>
+        <input type="hidden" id="current-accession-number" value="{{ study.accession_number }}">
         <span>Date: {{study.study_date}}</span>
 {#        <span>Predicted class: {{study.predicted_class.value}}</span>#}
         <span>Description: {{study.study_description}}  </span>
+        <<button class="previous-button" onclick="previousStudy()"> <a>previous study</a></button>
         <button class="all-studies-button" onclick="backToAllStudies()"> <a>Back to all studies</a></button>
+        <button class="next-button" onclick="nextStudy()"> <a>next study</a></button>
     </header>
     <div class="app" >
 <!--            <b>{{ study.series[0].images[0].fractured_annotated_image_dir }}</b>-->
