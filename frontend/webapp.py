@@ -64,7 +64,42 @@ def get_study_dao(study):
 
     return studyDAO
 
+@app.route('/study/<accessionNumber>/previous')
+def previous_study(accessionNumber):
+    cursor = study_database.cursor(buffered=True)
+    sql = """
+        SELECT accession_number 
+        FROM study 
+        WHERE accession_number < %s
+        ORDER BY accession_number DESC
+        LIMIT 1;"""
+    val = (accessionNumber,)
+    cursor.execute(sql, val)
+    previous_study=cursor.fetchone()
+    if previous_study:
+        return redirect(url_for('view_single_study', accessionNumber=previous_study[0]))
+    else:
+        # Handle case where there is no next study (perhaps redirect to the first study or show a message)
+        return redirect(url_for('view_single_study', accessionNumber=accessionNumber))
 
+@app.route('/study/<accessionNumber>/next')
+def next_study(accessionNumber):
+    cursor = study_database.cursor(buffered=True)
+    sql = """
+        SELECT accession_number 
+        FROM study 
+        WHERE accession_number > %s
+        ORDER BY accession_number ASC
+        LIMIT 1;"""
+    val = (accessionNumber,)
+    cursor.execute(sql, val)
+    next_study=cursor.fetchone()
+    if next_study:
+        return redirect(url_for('view_single_study', accessionNumber=next_study[0]))
+    else:
+        # Handle case where there is no next study (perhaps redirect to the first study or show a message)
+        return redirect(url_for('view_single_study', accessionNumber=accessionNumber))
+        
 def fetch_study(cursor, accessionNumber) -> StudyDAO:
     sql = "SELECT * FROM study WHERE accession_number = %s"
     val = (accessionNumber,)
@@ -147,7 +182,7 @@ def get_prototype_DAO(p):
 def fetch_all_studies():
     cursor = study_database.cursor(buffered=True)
     cursor.execute("USE hip_fracture_study")
-    sql = "SELECT * FROM study"
+    sql = "SELECT * FROM study ORDER BY accession_number ASC"
     cursor.execute(sql)
     studies = cursor.fetchall()
     studyDAOs = []
@@ -163,7 +198,7 @@ def fetch_page_studies(page):
     cursor = study_database.cursor(buffered=True)
     cursor.execute("USE hip_fracture_study")
 
-    cursor.execute("SELECT * FROM study LIMIT %s OFFSET %s", (per_page, offset))
+    cursor.execute("SELECT * FROM study ORDER BY accession_number ASC LIMIT %s OFFSET %s", (per_page, offset))
     studies = cursor.fetchall()
 
     studyDAOs = []
