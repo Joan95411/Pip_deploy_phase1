@@ -118,7 +118,147 @@ async function displayPrototypes(prototypes_json,fracturedImagePath) {
 
     prototypesBar.appendChild(prototypeTable);
 });
+// Create the "Add Prototype" button
+    const addPrototypeButton = document.createElement('button');
+    addPrototypeButton.textContent = 'Add Prototype';
+    addPrototypeButton.classList.add('add-prototype-button');
+
+    // Add event listener for the button
+    addPrototypeButton.addEventListener('click', function () {
+        addNewPrototype();
+    });
+
+    // Append the button below the table
+    prototypesBar.appendChild(addPrototypeButton);
 }
+var clicks = [];
+var canvas, context, imageObj;
+
+function addNewPrototype() {
+    const addPrototypeButton = document.querySelector('.add-prototype-button');
+
+    // Check if we're in the process of drawing
+    if (addPrototypeButton.textContent === 'Finish Drawing') {
+        // Save the drawing and reset the button
+        saveDrawing();
+        addPrototypeButton.textContent = 'Add Prototype';
+        return;
+    }
+
+    // Change button text to 'Finish Drawing'
+    addPrototypeButton.textContent = 'Finish Drawing';
+    var imageDisplay = document.querySelector('.image-display');
+
+    // Remove any existing canvas if present
+    var existingCanvas = document.getElementById('drawing-canvas');
+    if (existingCanvas) {
+        imageDisplay.removeChild(existingCanvas);
+    }
+
+    // Create a new canvas element
+    canvas = document.createElement('canvas');
+    canvas.id = 'drawing-canvas';
+    imageDisplay.appendChild(canvas);
+
+    context = canvas.getContext('2d');
+    imageObj = new Image();
+
+    // Load the image and set canvas dimensions
+    imageObj.onload = function() {
+        $(canvas).attr({
+            width: this.width,
+            height: this.height
+        });
+        context.drawImage(imageObj, 0, 0);
+    };
+
+
+    // Set the image source to the x-ray image
+    var imgElement = document.getElementById('x-ray-image');
+    imageObj.src = imgElement.src;
+    // Reset clicks array if the button is clicked again
+    clicks = [];
+
+    // Set up the event listener for drawing points on the canvas
+    canvas.addEventListener('mouseup', function(e){
+        const rect = canvas.getBoundingClientRect();
+
+        // Calculate the cursor position relative to the canvas
+        // Since the canvas is scaled, calculate the scale factors
+        const scaleX = imageObj.width / rect.width;
+        const scaleY = imageObj.height / rect.height;
+
+        // Correctly map the mouse position to the canvas coordinates
+        const offsetX = (e.clientX - rect.left) * scaleX;
+        const offsetY = (e.clientY - rect.top) * scaleY;
+
+        // Print the cursor offset
+        console.log('Cursor X: ' + offsetX + ', Cursor Y: ' + offsetY);
+
+        clicks.push({
+            x: offsetX,
+            y: offsetY
+        });
+        redraw();
+    });
+}
+
+function saveDrawing() {
+    // Convert the canvas content (image + drawing) to a data URL
+    const dataURL = canvas.toDataURL('image/png');
+
+    // Create an anchor element to download the image
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'annotated_image.png';
+
+    // Trigger the download
+    link.click();
+
+    console.log('Drawing saved as a new image.');
+}
+function drawPolygon() {
+    context.fillStyle = 'rgba(100,100,100,0.5)';
+    context.strokeStyle = "#df4b26";
+    context.lineWidth = 1;
+
+    context.beginPath();
+    context.moveTo(clicks[0].x, clicks[0].y);
+    for (var i = 1; i < clicks.length; i++) {
+        context.lineTo(clicks[i].x, clicks[i].y);
+    }
+    context.closePath();
+    context.fill();
+    context.stroke();
+}
+
+// Function to draw points on the canvas
+function drawPoints() {
+    context.strokeStyle = "#df4b26";
+    context.lineJoin = "round";
+    context.lineWidth = 10;
+
+    for (var i = 0; i < clicks.length; i++) {
+        context.beginPath();
+        context.arc(clicks[i].x, clicks[i].y, 3, 0, 2 * Math.PI, false);
+        context.fillStyle = '#ffffff';
+        context.fill();
+        context.lineWidth = 5;
+        context.stroke();
+    }
+}
+
+// Function to redraw the canvas
+function redraw() {
+    // Clear the canvas
+    canvas.width = canvas.width;
+    // Redraw the image
+    context.drawImage(imageObj, 0, 0);
+    // Draw the polygon and points
+    drawPolygon();
+    drawPoints();
+}
+
 // Function to display the prototype image
 async function displayPrototypeImage(prototypeIndex,fracturedImagePath,predictClass) {
     let fracturedImagePath3;
