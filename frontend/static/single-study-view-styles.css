@@ -65,7 +65,7 @@
 }
 
 .image-display {
-
+position: relative;
     border: 1px solid #ccc;
     text-align: center;
     /*margin-top: 0; !* Reset margin-top *!*/
@@ -73,8 +73,19 @@
 
 /* Increase the image size */
 #x-ray-image {
+    display: block;
     width: 672px;
     height: 672px; /* Adjust the maximum height as needed */
+}
+#drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: transparent;
+    width: 100%;
+    height: 100%;
+    cursor:  crosshair;
+    z-index: 1; /* Ensure the canvas is on top of the image */
 }
 .comment-section {
     display: grid; /* Hide the comment section by default */
