@@ -2,7 +2,26 @@
 async function backToAllStudies() {
     window.location.href = "/study/all";
 }
+function nextStudy() {
+    // Get the current study's accession number
+    const currentAccessionNumber = document.getElementById('current-accession-number').value;
+    console.log(currentAccessionNumber);
+    // Create the URL for the next study
+    const nextStudyUrl = `/study/${currentAccessionNumber}/next`;
 
+    // Redirect to the next study
+    window.location.href = nextStudyUrl;
+}
+function previousStudy() {
+    // Get the current study's accession number
+    const currentAccessionNumber = document.getElementById('current-accession-number').value;
+    console.log(currentAccessionNumber);
+    // Create the URL for the next study
+    const nextStudyUrl = `/study/${currentAccessionNumber}/previous`;
+
+    // Redirect to the next study
+    window.location.href = nextStudyUrl;
+}
 function customAlert(msg,duration)
 {
     const styler = document.createElement("div");
