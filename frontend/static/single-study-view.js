@@ -46,6 +46,22 @@ function flagErrorToDatabase(prototype_uid) {
     });
 }
 
+function removeCanvas() {
+    if (canvas) {
+        canvas.remove();  // Remove the canvas from the DOM
+        canvas = null;    // Clear the canvas variable
+        context = null;   // Clear the context variable
+        clicks = [];      // Clear the clicks array
+        const addPrototypeButton = document.querySelector('.add-prototype-button');
+
+    // Check if we're in the process of drawing
+    if (addPrototypeButton.textContent === 'Finish Drawing') {
+        addPrototypeButton.textContent = 'Add Prototype';
+        return;
+    }
+    }
+
+}
 async function displayPrototypes(prototypes_json,fracturedImagePath) {
 
     const prototypes = JSON.parse(prototypes_json); // Parse the JSON string into an array
@@ -59,8 +75,6 @@ async function displayPrototypes(prototypes_json,fracturedImagePath) {
     prototypeHeader.textContent = 'Prototypes in this image';
 
     prototypesBar.appendChild(prototypeHeader);
-
-
 
     const headerRow = prototypeTable.insertRow();
     const headerCellID = headerRow.insertCell();
@@ -216,6 +230,7 @@ function saveDrawing() {
     link.click();
 
     console.log('Drawing saved as a new image.');
+    removeCanvas();
 }
 function drawPolygon() {
     context.fillStyle = 'rgba(100,100,100,0.5)';
@@ -261,6 +276,7 @@ function redraw() {
 
 // Function to display the prototype image
 async function displayPrototypeImage(prototypeIndex,fracturedImagePath,predictClass) {
+    removeCanvas();
     let fracturedImagePath3;
     try {
         const clickedButton = event.currentTarget;
@@ -290,6 +306,7 @@ async function displayPrototypeImage(prototypeIndex,fracturedImagePath,predictCl
     }
 }
 async function displayImage(fracturedImagePath) {
+    removeCanvas();
     let fracturedImagePath2;
     try {
         const clickedButton = event.currentTarget;
