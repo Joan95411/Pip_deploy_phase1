@@ -1,11 +1,13 @@
 import os
-
-from flask import Flask, request, render_template, send_from_directory, Response, redirect, url_for
+from flask import Flask, request, render_template, send_from_directory, Response, redirect, url_for, jsonify
 import mysql.connector
 from SQLCredentials import SQLCredentials
 from StudyDAO import StudyDAO, SeriesDAO, ImageDAO, PrototypeDAO
 import logging
-import traceback
+import base64
+from io import BytesIO
+from PIL import Image
+import json
 
 
 logger = logging.getLogger("webapp")
@@ -288,7 +290,41 @@ def patch(prototype_uid):
         return Response(status=500)
     return Response(status=200)
 
+@app.route('/save-drawing2', methods=['POST'])
+def save_drawing2():
+    data = request.json
+    image_data = data['image']
+    file_name = data['name']
+    save_directory = data['directory']
+    clicks = data['points']  # Retrieve the list of points from the request
 
+    # Create the directory if it doesn't exist
+    if not os.path.exists(save_directory):
+        os.makedirs(save_directory)
+
+    # Decode the base64 image data
+    image_data = image_data.split(',')[1]  # Remove the data:image/png;base64, part
+    image_bytes = base64.b64decode(image_data)
+
+    # Save the image
+    image = Image.open(BytesIO(image_bytes))
+    image.save(os.path.join(save_directory, file_name))
+
+    # Save the points (clicks) to the database
+    try:
+        cursor = study_database.cursor()
+
+        cursor.execute("""
+                    INSERT INTO annotations (filename, points) VALUES (%s, %s)
+                """, (file_name, json.dumps(clicks)))
+
+        study_database.commit()
+        cursor.close()
+
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error saving to database: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/study/<accessionNumber>/save', methods=["POST"])
 def save_comment(accessionNumber):
