@@ -56,5 +56,10 @@ CREATE TABLE IF NOT EXISTS prototypes (
                      FOREIGN KEY (image_uid) REFERENCES images(image_uid)
 );
 
-
+CREATE TABLE IF NOT EXISTS annotations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    points TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
