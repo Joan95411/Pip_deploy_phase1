@@ -22,6 +22,7 @@ function previousStudy() {
     // Redirect to the next study
     window.location.href = nextStudyUrl;
 }
+
 function customAlert(msg,duration)
 {
     const styler = document.createElement("div");
@@ -36,10 +37,21 @@ function customAlert(msg,duration)
 
 
 async function displayPrototypesAndImages(prototypes_json, fracturedImagePath) {
+    const lastSlashIndex = fracturedImagePath.lastIndexOf('\\'); // Find the index of the last backslash
+    let basePath = fracturedImagePath.substring(0, lastSlashIndex ); // Get the base path up to and including the last backslash
+    const lastSlashIndex1=basePath.lastIndexOf('\\');
+    let basePath1 = basePath.substring(0, lastSlashIndex1 + 1);
+
     await displayImage( fracturedImagePath);
-    await displayPrototypes(prototypes_json,fracturedImagePath);
-    const normalizedPath = fracturedImagePath.replace(/\\/g, '/');
-    console.log('Normalized fracturedImagePath:', normalizedPath);
+    await displayPrototypes(prototypes_json,basePath1);
+
+    const showOriginalButton = document.getElementById('show-original-button');
+    const newButton = showOriginalButton.cloneNode(true);  // Clone the button to remove all event listeners
+    showOriginalButton.parentNode.replaceChild(newButton, showOriginalButton);  // Replace old button with the new button
+    // Add the new event listener with the updated fracturedImagePath
+    newButton.addEventListener('click', function () {
+        displayOriginalImage(fracturedImagePath);
+    });
 }
 
 function flagErrorToDatabase(prototype_uid) {
@@ -64,7 +76,6 @@ function flagErrorToDatabase(prototype_uid) {
         console.error("Error:", error);
     });
 }
-
 function removeCanvas() {
     if (canvas) {
         canvas.remove();  // Remove the canvas from the DOM
@@ -79,9 +90,8 @@ function removeCanvas() {
         return;
     }
     }
-
 }
-async function displayPrototypes(prototypes_json,fracturedImagePath) {
+async function displayPrototypes(prototypes_json,basePath1) {
 
     const prototypes = JSON.parse(prototypes_json); // Parse the JSON string into an array
     const prototypesBar = document.getElementById('prototypes-bar');
@@ -117,8 +127,9 @@ async function displayPrototypes(prototypes_json,fracturedImagePath) {
         const predictClass=prototype.predicted_class.toLowerCase();
         // Add a click event listener to the index button
         indexButton.addEventListener('click', function () {
-            displayPrototypeImage(prototype.prototype_index,fracturedImagePath,predictClass); // Call the function to display the image
+            displayPrototypeImage(prototype.prototype_index,basePath1,predictClass); // Call the function to display the image
         });
+
         dataCellID.appendChild(indexButton);
 
         const dataCellSimWeight = dataRow.insertCell();
@@ -151,29 +162,30 @@ async function displayPrototypes(prototypes_json,fracturedImagePath) {
 
     prototypesBar.appendChild(prototypeTable);
 });
-// Create the "Add Prototype" button
+    // Create the "Add Prototype" button
     const addPrototypeButton = document.createElement('button');
     addPrototypeButton.textContent = 'Add Prototype';
     addPrototypeButton.classList.add('add-prototype-button');
 
     // Add event listener for the button
     addPrototypeButton.addEventListener('click', function () {
-        addNewPrototype();
+        addNewPrototype(basePath1);
     });
 
     // Append the button below the table
     prototypesBar.appendChild(addPrototypeButton);
 }
+
 var clicks = [];
 var canvas, context, imageObj;
 
-function addNewPrototype() {
+function addNewPrototype(basePath1) {
     const addPrototypeButton = document.querySelector('.add-prototype-button');
 
     // Check if we're in the process of drawing
     if (addPrototypeButton.textContent === 'Finish Drawing') {
         // Save the drawing and reset the button
-        saveDrawing();
+        saveDrawing2(basePath1);
         addPrototypeButton.textContent = 'Add Prototype';
         return;
     }
@@ -235,22 +247,42 @@ function addNewPrototype() {
         redraw();
     });
 }
-
-function saveDrawing() {
+function saveDrawing2(basePath1) {
     // Convert the canvas content (image + drawing) to a data URL
     const dataURL = canvas.toDataURL('image/png');
 
-    // Create an anchor element to download the image
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = 'annotated_image.png';
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, ''); // Replace colons, dots, and hyphens with empty strings
+    const filename = `author_${timestamp}.png`;
 
-    // Trigger the download
-    link.click();
+    // Send the data URL, filename, and save directory to the server via a POST request
+    fetch('/save-drawing2', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            image: dataURL,
+            name: filename,
+            directory: basePath1 ,
+            points: clicks
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Drawing saved successfully on the server.');
+        } else {
+            console.error('Failed to save drawing on the server.');
+        }
+    })
+    .catch(error => {
+        console.error('Error while saving drawing:', error);
+    });
 
-    console.log('Drawing saved as a new image.');
     removeCanvas();
 }
+
+
 function drawPolygon() {
     context.fillStyle = 'rgba(100,100,100,0.5)';
     context.strokeStyle = "#df4b26";
@@ -294,7 +326,8 @@ function redraw() {
 }
 
 // Function to display the prototype image
-async function displayPrototypeImage(prototypeIndex,fracturedImagePath,predictClass) {
+async function displayPrototypeImage(prototypeIndex,basePath1,predictClass) {
+
     removeCanvas();
     let fracturedImagePath3;
     try {
@@ -308,12 +341,30 @@ async function displayPrototypeImage(prototypeIndex,fracturedImagePath,predictCl
         // Add the 'active' class to the clicked button
         clickedButton.classList.add('active');
 
-        const lastSlashIndex = fracturedImagePath.lastIndexOf('\\'); // Find the index of the last backslash
+        fracturedImagePath3 = basePath1+ predictClass +'/'+  'prototype_' + prototypeIndex + '.jpg'; // Append the prototype file name
+
+        const response = await fetch(`/image/${fracturedImagePath3}`);
+        const image = await response.blob(); // Retrieve image data as a blob
+        const selectedImage = document.getElementById('x-ray-image');
+        selectedImage.src = URL.createObjectURL(image); // Set image data as src
+
+    } catch (error) {
+        console.error('Error fetching image URL:', error);
+    }
+}
+async function displayOriginalImage(fracturedImagePath) {
+
+    removeCanvas();
+    let fracturedImagePath3;
+    try {
+
+        const lastSlashIndex = fracturedImagePath.lastIndexOf('\\');
+        let imageName = fracturedImagePath.substring(lastSlashIndex + 1);
+        imageName = imageName.replace('-fractured.jpg', '');
         let basePath = fracturedImagePath.substring(0, lastSlashIndex ); // Get the base path up to and including the last backslash
         const lastSlashIndex1=basePath.lastIndexOf('\\');
         let basePath1 = basePath.substring(0, lastSlashIndex1 + 1);
-        console.log(basePath1);
-        fracturedImagePath3 = basePath1+ predictClass +'/'+  'prototype_' + prototypeIndex + '.jpg'; // Append the prototype file name
+        fracturedImagePath3 = basePath1+  imageName + '.jpg'; // Append the prototype file name
 
         const response = await fetch(`/image/${fracturedImagePath3}`);
         const image = await response.blob(); // Retrieve image data as a blob
@@ -335,10 +386,9 @@ async function displayImage(fracturedImagePath) {
             button.classList.remove('active');
         });
         const commentSection = document.querySelector('.comment-section');
-        // Add the 'active' class to the clicked button
         clickedButton.classList.add('active');
-        fracturedImagePath2 = event.target.parentElement.querySelector('div[data-value]').getAttribute('data-value')
-        const response = await fetch(`/image/${fracturedImagePath2}`);
+        // fracturedImagePath2 = event.target.parentElement.querySelector('div[data-value]').getAttribute('data-value')
+        const response = await fetch(`/image/${fracturedImagePath}`);
         const image = await response.blob(); // Retrieve image data as a blob
         const selectedImage = document.getElementById('x-ray-image');
         selectedImage.src = URL.createObjectURL(image); // Set image data as src
@@ -346,8 +396,16 @@ async function displayImage(fracturedImagePath) {
     } catch (error) {
         console.error('Error fetching image URL:', error);
     }
+
 }
 
+document.addEventListener("DOMContentLoaded", function() {
+    // Select the first button by its ID and trigger a click event
+    const firstButton = document.querySelector('ul li button');
+    if (firstButton) {
+        firstButton.click();
+    }
+});
 document.addEventListener("DOMContentLoaded",  function save(accessionNumber) {
     const saveButton = document.getElementById("save-button");
 
