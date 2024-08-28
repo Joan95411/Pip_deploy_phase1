@@ -124,7 +124,10 @@ async function displayPrototypes(prototypes_json,basePath1) {
         // dataCellID.textContent = prototype.prototype_index;
         const indexButton = document.createElement('button');
         indexButton.textContent = prototype.prototype_index;
-        const predictClass=prototype.predicted_class.toLowerCase();
+        let predictClass = prototype.predicted_class.toLowerCase();
+        if (predictClass === 'not fractured') {
+            predictClass = 'non_fractured';
+        }
         // Add a click event listener to the index button
         indexButton.addEventListener('click', function () {
             displayPrototypeImage(prototype.prototype_index,basePath1,predictClass); // Call the function to display the image
