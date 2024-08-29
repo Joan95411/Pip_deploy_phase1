@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS annotations (
     image_uid VARCHAR(300) NOT NULL,  -- Unique identifier for the image
     points TEXT NOT NULL,  -- Points data for annotations
     annotation_comment VARCHAR(1000),
-    annotation_status VARCHAR(255) NOT NULL DEFAULT 'TBD',
+    annotation_status VARCHAR(255) NOT NULL DEFAULT 'annotated',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (image_uid) REFERENCES images(image_uid)
 );

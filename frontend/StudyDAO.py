@@ -151,6 +151,7 @@ class PrototypeDAO:
             "prototype_index": self.prototype_index,
             "prototype_uid": self.prototype_uid,
             "coordinates": self.coordinates,
+            "image_uid": self.image_uid,
             "similarity_weight": self.similarity_weight,
             "similarity": self.similarity,
             "predicted_class": self.predicted_class.value,

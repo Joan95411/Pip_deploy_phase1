@@ -180,7 +180,18 @@ def get_prototype_DAO(p):
         manually_annotated=p[11]
     )
 
-
+def get_annotation_DAO(s) -> AnnotationDAO:
+    return AnnotationDAO(
+        annotation_id=s[0],
+        annotation_dir=s[1],
+        author=s[2],
+        image_uid=s[3],
+        points=s[4],
+        annotation_comment=s[5],
+        annotation_status=s[6],
+        created_at=s[7]
+    )
+    
 def fetch_all_studies():
     cursor = study_database.cursor(buffered=True)
     cursor.execute("USE hip_fracture_study")
@@ -209,7 +220,30 @@ def fetch_page_studies(page):
 
     study_database.commit()
     return studyDAOs
-    
+
+@app.route('/fetch_annotations', methods=['GET'])
+def fetch_annotations():
+    cursor = study_database.cursor(buffered=True)
+    image_uid = request.args.get('image_uid')
+
+    if not image_uid:
+        return jsonify({'error': 'image_uid is required'}), 400
+
+    sql = "SELECT * FROM annotations WHERE image_uid = %s"
+    val = (image_uid,)
+    cursor.execute(sql, val)
+    annotations = cursor.fetchall()
+
+    # Convert annotations to a list of dictionaries
+    annotations_list = [
+        {'id': get_annotation_DAO(a).annotation_id,
+         'author': get_annotation_DAO(a).author,
+         'created_at': get_annotation_DAO(a).created_at}
+        for a in annotations
+    ]
+
+    return jsonify(annotations_list), 200
+
 @app.route('/study/')
 def redirect_to_study():
     accessionNumber = request.args.get('accessionNumber')
@@ -296,27 +330,27 @@ def save_drawing2():
     image_data = data['image']
     file_name = data['name']
     save_directory = data['directory']
-    clicks = data['points']  # Retrieve the list of points from the request
-
-    # Create the directory if it doesn't exist
-    if not os.path.exists(save_directory):
-        os.makedirs(save_directory)
-
-    # Decode the base64 image data
+    clicks = data['points']
+    image_uid=data['image_uid']
     image_data = image_data.split(',')[1]  # Remove the data:image/png;base64, part
     image_bytes = base64.b64decode(image_data)
 
     # Save the image
-    image = Image.open(BytesIO(image_bytes))
-    image.save(os.path.join(save_directory, file_name))
-
-    # Save the points (clicks) to the database
     try:
+        os.makedirs(save_directory, exist_ok=True)  # Create the directory if it does not exist
+        image = Image.open(BytesIO(image_bytes))
+        sdir=os.path.join(save_directory, file_name + '.png')
+        image.save(sdir)
+        # Save the points (clicks) to the database
         cursor = study_database.cursor()
 
+        author = data.get('author', 'unknown')  # Replace with actual author data as needed
+        annotation_status = 'annotated'  # Default status
+
         cursor.execute("""
-                    INSERT INTO annotations (filename, points) VALUES (%s, %s)
-                """, (file_name, json.dumps(clicks)))
+            INSERT INTO annotations (id, dir, author, image_uid, points, annotation_status) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (file_name.rstrip('.png'), sdir, author, image_uid, json.dumps(clicks), annotation_status))
 
         study_database.commit()
         cursor.close()

@@ -169,14 +169,56 @@ async function displayPrototypes(prototypes_json,basePath1) {
     const addPrototypeButton = document.createElement('button');
     addPrototypeButton.textContent = 'Add Prototype';
     addPrototypeButton.classList.add('add-prototype-button');
-
-    // Add event listener for the button
     addPrototypeButton.addEventListener('click', function () {
         addNewPrototype(basePath1);
     });
-
     // Append the button below the table
     prototypesBar.appendChild(addPrototypeButton);
+
+    // Create a new table for annotations
+    const annotationTable = document.createElement('table');
+    annotationTable.classList.add('annotation-table');
+    const annotationHeader = document.createElement('h2');
+    annotationHeader.classList.add('annotation-header');
+    annotationHeader.textContent = `Annotations for Image`;
+    prototypesBar.appendChild(annotationHeader);
+
+    // Annotation Table Header
+    const annotationHeaderRow = annotationTable.insertRow();
+    const annotationCellID = annotationHeaderRow.insertCell();
+    annotationCellID.textContent = 'Annotation ID';
+    const annotationCellCreatedAt = annotationHeaderRow.insertCell();
+    annotationCellCreatedAt.textContent = 'Created At';
+
+    // Assume fetchAnnotationsByImageUID is a function that fetches annotations based on the image_uid of the first prototype (or any shared image_uid)
+    const annotations = await fetchAnnotationsByImageUID(prototypes[0].image_uid);
+
+    // Populate the annotation table with fetched annotations
+    annotations.forEach(function (annotation) {
+        const annotationRow = annotationTable.insertRow();
+        const annotationCellID = annotationRow.insertCell();
+        annotationCellID.textContent = annotation.id;
+        const annotationCellCreatedAt = annotationRow.insertCell();
+        annotationCellCreatedAt.textContent = annotation.created_at;
+    });
+
+    // Append the annotation table to the prototypes bar
+    prototypesBar.appendChild(annotationTable);
+
+}
+
+async function fetchAnnotationsByImageUID(imageUID) {
+    try {
+        const response = await fetch(`/fetch_annotations?image_uid=${imageUID}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const annotations = await response.json();
+        return annotations;
+    } catch (error) {
+        console.error('Failed to fetch annotations:', error);
+        return [];
+    }
 }
 
 var clicks = [];
@@ -250,10 +292,14 @@ function addNewPrototype(basePath1) {
         redraw();
     });
 }
+
 function saveDrawing2(basePath1) {
     // Convert the canvas content (image + drawing) to a data URL
     const dataURL = canvas.toDataURL('image/png');
-
+    basePath1 = basePath1.slice(0, -1);
+    const lastSlashIndex = basePath1.lastIndexOf('/');
+    let imageUid = basePath1.substring(lastSlashIndex + 1);
+    console.log(imageUid)
     const timestamp = new Date().toISOString().replace(/[:.-]/g, ''); // Replace colons, dots, and hyphens with empty strings
     const filename = `author_${timestamp}.png`;
 
@@ -266,7 +312,8 @@ function saveDrawing2(basePath1) {
         body: JSON.stringify({
             image: dataURL,
             name: filename,
-            directory: basePath1 ,
+            image_uid:imageUid,
+            directory: basePath1,
             points: clicks
         })
     })
@@ -284,7 +331,6 @@ function saveDrawing2(basePath1) {
 
     removeCanvas();
 }
-
 
 function drawPolygon() {
     context.fillStyle = 'rgba(100,100,100,0.5)';
