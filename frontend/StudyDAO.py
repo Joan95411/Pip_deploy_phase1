@@ -157,3 +157,34 @@ class PrototypeDAO:
             "flagged_error": self.flagged_error,
             "manually_annotated": self.manually_annotated,
         }
+        
+class AnnotationDAO:
+    def __init__(self, annotation_id: str,
+                 points:str,
+                 image_uid: str,
+                 annotation_dir: str,
+                 author: str,
+                 annotation_comment: str,
+                 annotation_status: str,
+                 created_at: str):
+        self.annotation_id = annotation_id
+        self.image_uid = image_uid
+        self.points = points
+        self.annotation_dir = annotation_dir
+        self.author = author
+        self.annotation_comment = annotation_comment
+        self.annotation_status = annotation_status
+        self.created_at = created_at
+
+
+    def to_dict(self):
+        return {
+            "annotation_id": self.annotation_id,
+            "image_uid": self.image_uid,
+            "annotation_dir": self.annotation_dir,
+            "author": self.author,
+            "points": self.points,
+            "annotation_comment": self.annotation_comment,
+            "annotation_status": self.annotation_status,
+            "created_at": self.created_at
+        }
