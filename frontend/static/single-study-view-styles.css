@@ -220,3 +220,23 @@ position: relative;
     width: 180px;
 
 }
+
+.annotation-table {
+    border-collapse: collapse;
+    border: 1px solid #ccc;
+    width: 100%;
+}
+
+.annotation-table th,
+.annotation-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+.annotation-header {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+}
