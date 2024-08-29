@@ -57,9 +57,14 @@ CREATE TABLE IF NOT EXISTS prototypes (
 );
 
 CREATE TABLE IF NOT EXISTS annotations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    filename VARCHAR(255) NOT NULL,
-    points TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id VARCHAR(255) PRIMARY KEY,
+    dir VARCHAR(1000) NOT NULL,  -- Directory where the file is located
+    author VARCHAR(255) NOT NULL,  -- Name of the person who annotated
+    image_uid VARCHAR(300) NOT NULL,  -- Unique identifier for the image
+    points TEXT NOT NULL,  -- Points data for annotations
+    annotation_comment VARCHAR(1000),
+    annotation_status VARCHAR(255) NOT NULL DEFAULT 'TBD',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (image_uid) REFERENCES images(image_uid)
 );
 
