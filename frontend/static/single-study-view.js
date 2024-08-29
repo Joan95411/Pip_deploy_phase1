@@ -190,8 +190,10 @@ async function displayPrototypes(prototypes_json,basePath1) {
     const annotationCellCreatedAt = annotationHeaderRow.insertCell();
     annotationCellCreatedAt.textContent = 'Created At';
 
-    // Assume fetchAnnotationsByImageUID is a function that fetches annotations based on the image_uid of the first prototype (or any shared image_uid)
-    const annotations = await fetchAnnotationsByImageUID(prototypes[0].image_uid);
+    const basePath2 = basePath1.slice(0, -1);
+    const lastSlashIndex = basePath2.lastIndexOf('/');
+    let imageUid = basePath2.substring(lastSlashIndex + 1);
+    const annotations = await fetchAnnotationsByImageUID(imageUid);
 
     // Populate the annotation table with fetched annotations
     annotations.forEach(function (annotation) {
