@@ -184,12 +184,13 @@ def get_annotation_DAO(s) -> AnnotationDAO:
     return AnnotationDAO(
         annotation_id=s[0],
         annotation_dir=s[1],
-        author=s[2],
-        image_uid=s[3],
-        points=s[4],
-        annotation_comment=s[5],
-        annotation_status=s[6],
-        created_at=s[7]
+        source_dir=s[2],
+        author=s[3],
+        image_uid=s[4],
+        points=s[5],
+        annotation_comment=s[6],
+        annotation_status=s[7],
+        created_at=s[8]
     )
     
 def fetch_all_studies():
@@ -344,7 +345,7 @@ def save_drawing2():
         image.save(sdir)
         # Save the points (clicks) to the database
         cursor = study_database.cursor()
-
+        cursor.execute("USE hip_fracture_study")
         author = data.get('author', 'unknown')  # Replace with actual author data as needed
         annotation_status = 'annotated'  # Default status
 
@@ -356,6 +357,37 @@ def save_drawing2():
         study_database.commit()
         cursor.close()
 
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error saving to database: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/save-drawing3', methods=['POST'])
+def save_drawing3():
+    data = request.json
+    file_name = data['name']
+    save_directory = data['directory']
+    clicks = data['points']
+    image_uid=data['image_uid']
+    source_dir=data['source_dir']
+    try:
+
+        sdir=os.path.join(save_directory, file_name )
+        cursor = study_database.cursor()
+        author = data.get('author', 'unknown')  # Replace with actual author data as needed
+        annotation_status = 'annotated'  # Default status
+        cursor.execute("USE hip_fracture_study")
+        cursor.execute("""
+            INSERT INTO annotations (dir,source_dir, author, image_uid, points, annotation_status) 
+            VALUES ( %s, %s, %s, %s, %s, %s)
+        """, (sdir, source_dir,author, image_uid, json.dumps(clicks), annotation_status))
+        annotation_id = cursor.lastrowid
+
+        study_database.commit()
+        cursor.close()
+
+        drawing_thread = threading.Thread(target=draw_polygon, args=(annotation_id,))
+        drawing_thread.start()
         return jsonify({"success": True})
     except Exception as e:
         print(f"Error saving to database: {e}")
@@ -410,6 +442,59 @@ def save_comment():
         print(f"Error saving comment to database: {e}")
         return jsonify({"success": False, "error": str(e)})
 
+def draw_polygon(annotation_id):
+    try:
+        cursor = study_database.cursor(dictionary=True)
+        cursor.execute("USE hip_fracture_study")
+        query = "SELECT dir,source_dir, points FROM annotations WHERE id = %s"
+        cursor.execute(query, (annotation_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            raise ValueError(f"No annotation found with ID: {annotation_id}")
+        target_dir=result['dir']
+        source_dir = result['source_dir']
+        points_data = result['points']
+        print(target_dir)
+        print(source_dir)
+        # Load the image using OpenCV
+        image = cv2.imread(source_dir)
+        if image is None:
+            raise ValueError(f"Unable to load image from path: {source_dir}")
+
+        overlay = image.copy()
+
+        # Convert JSON string to Python dictionary (if points data is stored as JSON)
+        shapes = json.loads(points_data)  # Use json.loads(points_data) if points_data is JSON formatted string
+        if not isinstance(shapes, list):
+            raise ValueError("Expected a list of shapes")
+
+            # Convert the list of point dictionaries into a format suitable for OpenCV
+        points = np.array([[int(p['x']), int(p['y'])] for p in shapes], np.int32)
+        points = points.reshape((-1, 1, 2))  # Reshape for OpenCV
+        # Define colors for line and fill (in BGR format)
+        line_color = (0, 255, 0)  # Green color for border (B, G, R)
+        fill_color = (0, 0, 255)  # Red color for fill (B, G, R)
+        alpha = 0.2  # Transparency factor (0 = fully transparent, 1 = fully opaque)
+
+        # Draw filled polygon with transparent fill
+        cv2.fillPoly(overlay, [points], fill_color)
+        # Draw the border/outline of the polygon
+        cv2.polylines(overlay, [points], isClosed=True, color=line_color, thickness=2)
+
+        # Blend the overlay with the original image using the transparency factor
+        cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+
+        # Save the annotated image
+        cv2.imwrite(target_dir, image)
+        print(f"Annotated image saved at: {target_dir}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    finally:
+        study_database.commit()
+        cursor.close()
 
 if __name__ == "__main__":
     try:

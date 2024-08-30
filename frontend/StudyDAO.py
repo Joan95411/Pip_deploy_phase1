@@ -164,6 +164,7 @@ class AnnotationDAO:
                  points:str,
                  image_uid: str,
                  annotation_dir: str,
+                 source_dir: str,
                  author: str,
                  annotation_comment: str,
                  annotation_status: str,
@@ -172,6 +173,7 @@ class AnnotationDAO:
         self.image_uid = image_uid
         self.points = points
         self.annotation_dir = annotation_dir
+        self.source_dir =source_dir
         self.author = author
         self.annotation_comment = annotation_comment
         self.annotation_status = annotation_status
@@ -183,6 +185,7 @@ class AnnotationDAO:
             "annotation_id": self.annotation_id,
             "image_uid": self.image_uid,
             "annotation_dir": self.annotation_dir,
+            "source_dir": self.source_dir,
             "author": self.author,
             "points": self.points,
             "annotation_comment": self.annotation_comment,
