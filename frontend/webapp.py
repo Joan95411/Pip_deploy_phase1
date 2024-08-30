@@ -237,8 +237,9 @@ def fetch_annotations():
     # Convert annotations to a list of dictionaries
     annotations_list = [
         {'id': get_annotation_DAO(a).annotation_id,
+         'dir': get_annotation_DAO(a).annotation_dir,
          'author': get_annotation_DAO(a).author,
-         'created_at': get_annotation_DAO(a).created_at}
+         'comment': get_annotation_DAO(a).annotation_comment}
         for a in annotations
     ]
 
