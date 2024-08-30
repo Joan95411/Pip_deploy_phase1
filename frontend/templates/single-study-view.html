@@ -74,26 +74,14 @@
                 <h2 class="prototype-bar-header">List of prototypes will appear here after an image is chosen.</h2>
             </div>
             <div class="comment-section">
-                    <div class="comment-input-section">
-                        <h5 class="comment-header">Comment on this study:</h5>
-                        <input type="text" id="comment-input" class="comment-input" style=" width: 420px; height: 50px" placeholder="Comment on this study">
-                    </div>
+                <textarea
+                    id="comment-{{ study.accession_number }}"
+                    rows="4"
+                    cols="50"
+                    placeholder="Comment on this study">{{ study.study_comment if study.study_comment  else '' }}</textarea>
 
-                <div class="input-section">
-                    <div class="radpeer-score">
-                        <h5 class="radpeer-score-header">RADPEER score:</h5>
-                        <div class="radpeer-score-input">
-                            <label><input type="radio" name="rating" value="1">1</label>
-                            <label><input type="radio" name="rating" value="2">2</label>
-                            <label><input type="radio" name="rating" value="3">3</label>
-                            <label><input type="radio" name="rating" value="4">4</label>
-                            <label><input type="radio" name="rating" value="5">5</label>
-                        </div>
-                    </div>
-                    <div class="save-section">
-                    <button id="save-button" style=" width: 100px; height: 50px; align-self: center; padding: 10px"
-                            accession_number="{{study.accession_number}}">SAVE</button>
-                     </div>
+                <button onclick="saveComment('{{ study.accession_number }}')">Save</button>
+                </div>
                 </div>
             </div>
         </div>

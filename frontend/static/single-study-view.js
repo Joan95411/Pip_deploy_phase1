@@ -187,9 +187,8 @@ async function displayPrototypes(prototypes_json,basePath1) {
     const annotationHeaderRow = annotationTable.insertRow();
     const annotationCellID = annotationHeaderRow.insertCell();
     annotationCellID.textContent = 'Annotation ID';
-    const annotationCellCreatedAt = annotationHeaderRow.insertCell();
-    annotationCellCreatedAt.textContent = 'Created At';
-
+    const annotationCellComment = annotationHeaderRow.insertCell();
+    annotationCellComment.textContent = 'Comment';
     const basePath2 = basePath1.slice(0, -1);
     const lastSlashIndex = basePath2.lastIndexOf('/');
     let imageUid = basePath2.substring(lastSlashIndex + 1);
@@ -198,15 +197,81 @@ async function displayPrototypes(prototypes_json,basePath1) {
     // Populate the annotation table with fetched annotations
     annotations.forEach(function (annotation) {
         const annotationRow = annotationTable.insertRow();
+        // Create a button for the annotation ID
         const annotationCellID = annotationRow.insertCell();
-        annotationCellID.textContent = annotation.id;
-        const annotationCellCreatedAt = annotationRow.insertCell();
-        annotationCellCreatedAt.textContent = annotation.created_at;
+        const idButton = document.createElement('button');
+        idButton.textContent = annotation.id;
+        idButton.addEventListener('click', function () {
+            displayAnnotatedImage(annotation.dir);  // Function to handle image display
+        });
+        annotationCellID.appendChild(idButton);
+         // Create a cell for the comment
+    const annotationCellComment = annotationRow.insertCell();
+    const commentText = document.createElement('span');
+    commentText.textContent = annotation.comment || 'No comment';
+
+    // Create input field for editing (hidden by default)
+    const commentInput = document.createElement('textarea');
+    commentInput.value = annotation.comment;
+    commentInput.style.display = 'none';  // Hide the textarea initially
+
+    annotationCellComment.appendChild(commentText);
+    annotationCellComment.appendChild(commentInput);
+
+    // Create the "Edit Comment" button
+    const annotationCellEdit = annotationRow.insertCell();
+    const editButton = document.createElement('button');
+    editButton.textContent = 'Edit Comment';
+
+    // Event listener for editing and saving comment
+    editButton.addEventListener('click', function () {
+        if (editButton.textContent === 'Edit Comment') {
+            // Start editing
+            editButton.textContent = 'Finish Editing';
+            commentText.style.display = 'none';  // Hide the text
+            commentInput.style.display = 'inline';  // Show the input field
+            commentInput.focus();
+        } else {
+            // Finish editing
+            editButton.textContent = 'Edit Comment';
+            commentText.textContent = commentInput.value || 'No comment';  // Update the display text
+            commentText.style.display = 'inline';  // Show the text
+            commentInput.style.display = 'none';  // Hide the input field
+
+            // Call function to save the edited comment to the database
+            saveAnnotationComment(annotation.id, commentInput.value);
+        }
+    });
+
+    annotationCellEdit.appendChild(editButton);
     });
 
     // Append the annotation table to the prototypes bar
     prototypesBar.appendChild(annotationTable);
 
+}
+
+function saveAnnotationComment(annotationId, comment) {
+    // Implement your API call here to save the comment
+    // For example:
+    fetch(`/edit-comment`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: annotationId, comment: comment })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Comment saved successfully');
+        } else {
+            console.error('Error saving comment:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 }
 
 async function fetchAnnotationsByImageUID(imageUID) {
@@ -301,7 +366,6 @@ function saveDrawing2(basePath1) {
     basePath1 = basePath1.slice(0, -1);
     const lastSlashIndex = basePath1.lastIndexOf('/');
     let imageUid = basePath1.substring(lastSlashIndex + 1);
-    console.log(imageUid)
     const timestamp = new Date().toISOString().replace(/[:.-]/g, ''); // Replace colons, dots, and hyphens with empty strings
     const filename = `author_${timestamp}.png`;
 
@@ -376,6 +440,27 @@ function redraw() {
     drawPoints();
 }
 
+async function displayAnnotatedImage(imageUrl) {
+    removeCanvas();
+    try {
+        const clickedButton = event.currentTarget;
+        // Remove the 'active' class from all buttons
+        const allButtons = document.querySelectorAll('.right-sidebar button');
+        allButtons.forEach(function (button) {
+            button.classList.remove('active');
+        });
+        // Add the 'active' class to the clicked button
+        clickedButton.classList.add('active');
+
+        const response = await fetch(`/image/${imageUrl}`);
+        const image = await response.blob(); // Retrieve image data as a blob
+        const selectedImage = document.getElementById('x-ray-image');
+        selectedImage.src = URL.createObjectURL(image); // Set image data as src
+
+    } catch (error) {
+        console.error('Error fetching image URL:', error);
+    }
+}
 // Function to display the prototype image
 async function displayPrototypeImage(prototypeIndex,basePath1,predictClass) {
 
@@ -450,6 +535,32 @@ async function displayImage(fracturedImagePath) {
 
 }
 
+function saveComment(accessionNumber) {
+    const commentTextarea = document.getElementById(`comment-${accessionNumber}`);
+    const comment = commentTextarea.value;
+
+    fetch('/save-comment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ accession_number: accessionNumber, comment: comment })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Comment saved successfully');
+        } else {
+            console.error('Error saving comment:', data.error);
+            alert('Failed to save comment.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the comment.');
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     // Select the first button by its ID and trigger a click event
     const firstButton = document.querySelector('ul li button');
@@ -457,43 +568,4 @@ document.addEventListener("DOMContentLoaded", function() {
         firstButton.click();
     }
 });
-document.addEventListener("DOMContentLoaded",  function save(accessionNumber) {
-    const saveButton = document.getElementById("save-button");
 
-    saveButton.addEventListener("click", function() {
-        const accession_number = saveButton.getAttribute("accession_number");
-        const commentInput = document.getElementById("comment-input").value;
-        const selectedRating = document.querySelector("input[name='rating']:checked");
-
-        if (selectedRating) {
-            const ratingValue = selectedRating.value;
-
-            // Assuming you have an endpoint to send data
-            const endpoint = `/study/${accession_number}/save` // Replace with your actual endpoint
-
-            // Prepare the data to send
-            const commentAndRadpeerFormData = new FormData();
-            if (commentInput) {
-                commentAndRadpeerFormData.append('comment', commentInput);
-            }
-            commentAndRadpeerFormData.append('RADPEER_score', ratingValue);
-
-            // Send the data using fetch
-            fetch(endpoint, {
-                method: "POST",
-                body: commentAndRadpeerFormData
-            })
-                .then(response => response.json())
-                .then(result => {
-                    // Handle the response from the server if needed
-                    console.log("Server response:", result);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                });
-            alert("RADPEER score and comment saved.")
-        } else {
-            alert("RADPEER score is mandatory.");
-        }
-    });
-});

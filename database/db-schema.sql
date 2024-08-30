@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS prototypes (
 );
 
 CREATE TABLE IF NOT EXISTS annotations (
-    id VARCHAR(255) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     dir VARCHAR(1000) NOT NULL,  -- Directory where the file is located
     author VARCHAR(255) NOT NULL,  -- Name of the person who annotated
     image_uid VARCHAR(300) NOT NULL,  -- Unique identifier for the image

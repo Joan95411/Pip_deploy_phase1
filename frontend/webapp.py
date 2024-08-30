@@ -339,7 +339,7 @@ def save_drawing2():
     try:
         os.makedirs(save_directory, exist_ok=True)  # Create the directory if it does not exist
         image = Image.open(BytesIO(image_bytes))
-        sdir=os.path.join(save_directory, file_name + '.png')
+        sdir=os.path.join(save_directory, file_name )
         image.save(sdir)
         # Save the points (clicks) to the database
         cursor = study_database.cursor()
@@ -348,9 +348,9 @@ def save_drawing2():
         annotation_status = 'annotated'  # Default status
 
         cursor.execute("""
-            INSERT INTO annotations (id, dir, author, image_uid, points, annotation_status) 
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (file_name.rstrip('.png'), sdir, author, image_uid, json.dumps(clicks), annotation_status))
+            INSERT INTO annotations (dir, author, image_uid, points, annotation_status) 
+            VALUES ( %s, %s, %s, %s, %s)
+        """, (sdir, author, image_uid, json.dumps(clicks), annotation_status))
 
         study_database.commit()
         cursor.close()
@@ -360,25 +360,54 @@ def save_drawing2():
         print(f"Error saving to database: {e}")
         return jsonify({"success": False, "error": str(e)})
 
-@app.route('/study/<accessionNumber>/save', methods=["POST"])
-def save_comment(accessionNumber):
-    cursor = study_database.cursor(buffered=True)
-    cursor.execute("USE hip_fracture_study")
-    if 'comment' in request.form:
-        sql = "UPDATE study SET study_comment = %s WHERE accession_number = %s"
-        val = (request.form['comment'], accessionNumber,)
-        cursor.execute(sql, val)
-
-    sql = "UPDATE study SET RADPEER_score = %s WHERE accession_number = %s"
-    val = (request.form['RADPEER_score'], accessionNumber,)
+@app.route('/edit-comment', methods=['POST'])
+def annotation_comment():
     try:
-        cursor.execute(sql, val)
+        data = request.json
+        annotation_id = data['id']
+        comment = data['comment']
+
+        cursor = study_database.cursor()
+
+        # Update the comment for the given annotation ID
+        cursor.execute("""
+            UPDATE annotations
+            SET annotation_comment = %s
+            WHERE id = %s
+        """, (comment, annotation_id))
+
         study_database.commit()
+        cursor.close()
+
+        return jsonify({"success": True, "message": "Comment updated successfully"})
+
     except Exception as e:
-        print("An error occurred in the process of ", e)
-        study_database.rollback()
-        return Response(status=500)
-    return Response(status=200)
+        print(f"Error updating comment: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/save-comment', methods=['POST'])
+def save_comment():
+    data = request.json
+    accession_number = data['accession_number']
+    comment = data['comment']
+
+    try:
+        cursor = study_database.cursor()
+
+        # Update the comment based on the accession number
+        cursor.execute("""
+            UPDATE study
+            SET study_comment = %s 
+            WHERE accession_number = %s
+        """, (comment, accession_number))
+
+        study_database.commit()
+        cursor.close()
+
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error saving comment to database: {e}")
+        return jsonify({"success": False, "error": str(e)})
 
 
 if __name__ == "__main__":
