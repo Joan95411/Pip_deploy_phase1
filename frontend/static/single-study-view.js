@@ -297,7 +297,7 @@ function addNewPrototype(basePath1) {
     // Check if we're in the process of drawing
     if (addPrototypeButton.textContent === 'Finish Drawing') {
         // Save the drawing and reset the button
-        saveDrawing2(basePath1);
+        saveDrawing3(basePath1);
         addPrototypeButton.textContent = 'Add Prototype';
         return;
     }
@@ -398,6 +398,45 @@ function saveDrawing2(basePath1) {
     removeCanvas();
 }
 
+function saveDrawing3(basePath1) {
+
+    basePath1 = basePath1.slice(0, -1);
+    const lastSlashIndex = basePath1.lastIndexOf('\\');
+    let imageUid = basePath1.substring(lastSlashIndex + 1);
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, ''); // Replace colons, dots, and hyphens with empty strings
+    const filename = `author_${timestamp}.png`;
+
+    const selectedImage = document.getElementById('x-ray-image');
+    const sourceImageUrl = selectedImage.getAttribute('data-image-url');
+    // Send the data URL, filename, and save directory to the server via a POST request
+    fetch('/save-drawing3', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: filename,
+            image_uid:imageUid,
+            directory: basePath1,
+            source_dir: sourceImageUrl,
+            points: clicks
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Drawing saved successfully on the server.');
+        } else {
+            console.error('Failed to save drawing on the server.');
+        }
+    })
+    .catch(error => {
+        console.error('Error while saving drawing:', error);
+    });
+
+    removeCanvas();
+}
+
 function drawPolygon() {
     context.fillStyle = 'rgba(100,100,100,0.5)';
     context.strokeStyle = "#df4b26";
@@ -456,7 +495,7 @@ async function displayAnnotatedImage(imageUrl) {
         const image = await response.blob(); // Retrieve image data as a blob
         const selectedImage = document.getElementById('x-ray-image');
         selectedImage.src = URL.createObjectURL(image); // Set image data as src
-
+        selectedImage.setAttribute('data-image-url', imageUrl);
     } catch (error) {
         console.error('Error fetching image URL:', error);
     }
@@ -483,7 +522,7 @@ async function displayPrototypeImage(prototypeIndex,basePath1,predictClass) {
         const image = await response.blob(); // Retrieve image data as a blob
         const selectedImage = document.getElementById('x-ray-image');
         selectedImage.src = URL.createObjectURL(image); // Set image data as src
-
+        selectedImage.setAttribute('data-image-url', fracturedImagePath3);
     } catch (error) {
         console.error('Error fetching image URL:', error);
     }
@@ -506,7 +545,7 @@ async function displayOriginalImage(fracturedImagePath) {
         const image = await response.blob(); // Retrieve image data as a blob
         const selectedImage = document.getElementById('x-ray-image');
         selectedImage.src = URL.createObjectURL(image); // Set image data as src
-
+        selectedImage.setAttribute('data-image-url', fracturedImagePath3);
     } catch (error) {
         console.error('Error fetching image URL:', error);
     }
@@ -528,7 +567,7 @@ async function displayImage(fracturedImagePath) {
         const image = await response.blob(); // Retrieve image data as a blob
         const selectedImage = document.getElementById('x-ray-image');
         selectedImage.src = URL.createObjectURL(image); // Set image data as src
-
+        selectedImage.setAttribute('data-image-url', fracturedImagePath);
     } catch (error) {
         console.error('Error fetching image URL:', error);
     }
