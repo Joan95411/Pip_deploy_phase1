@@ -394,11 +394,11 @@ def save_drawing3():
     clicks = data['points']
     image_uid=data['image_uid']
     source_dir=data['source_dir']
+    author=data['author']
     try:
 
         sdir=os.path.join(save_directory, file_name )
         cursor = study_database.cursor()
-        author = data.get('author', 'unknown')  # Replace with actual author data as needed
         annotation_status = 'annotated'  # Default status
         cursor.execute("USE hip_fracture_study")
         cursor.execute("""
