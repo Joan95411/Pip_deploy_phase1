@@ -5,7 +5,7 @@ from mysql.connector import Error
 import mysql.connector
 from InferenceResult import HipFractureStudy, HipFractureSeries, HipFractureImage, HipFractureEnum
 import xml.etree.ElementTree as ElementTree
-
+from DropTable import Drop_Table
 from PIPNet_inference import PIPNetInference
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -292,5 +292,6 @@ class PukkaJDirectoryObserver:
 
 
 if __name__ == "__main__":
+    Drop_Table()
     observer = PukkaJDirectoryObserver(LISTENING_PATH)
     observer.analyze()

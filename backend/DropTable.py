@@ -39,12 +39,11 @@ def run_sql_script(script_path, user, password, host='localhost', database=None)
     cursor.close()
     connection.close()
 
-# Usage
-
-script_path = 'database/db-schema.sql'
-user='root'
-password='0105'
-database_name='hip_fracture_study'
-drop_all_tables(database_name, user, password)
-run_sql_script(script_path, user, password, database=database_name)
+def Drop_Table():
+    script_path = 'database/db-schema.sql'
+    user='root'
+    password='pukkaj'
+    database_name='hip_fracture_study'
+    drop_all_tables(database_name, user, password)
+    run_sql_script(script_path, user, password, database=database_name)
 
