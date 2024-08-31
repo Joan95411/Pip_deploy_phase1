@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, render_template, send_from_directory, Response, redirect, url_for, jsonify
+from flask import Flask, request, render_template, send_from_directory, Response, redirect, url_for, jsonify,session
 import mysql.connector
 from SQLCredentials import SQLCredentials
 from StudyDAO import StudyDAO, SeriesDAO, ImageDAO, PrototypeDAO
@@ -52,6 +52,27 @@ def homepage():
     studyDAOs = fetch_page_studies(page)
     return render_template('all-study-view.html', studies=studyDAOs,page=page)
 
+@app.route('/add_name', methods=['POST'])
+def add_name():
+    new_name = request.form.get('newName', '').strip()
+
+    if new_name:
+        cursor = study_database.cursor()
+        cursor.execute("INSERT INTO users (name) VALUES (%s)", (new_name,))
+        study_database.commit()
+        cursor.close()
+    return redirect(url_for('homepage'))
+
+@app.route('/get_names', methods=['GET'])
+def get_names():
+    # Fetch names from the database
+    cursor = study_database.cursor(dictionary=True)
+    cursor.execute("USE hip_fracture_study")
+    cursor.execute("SELECT name FROM users")  # Replace with your actual query
+    names = cursor.fetchall()
+    cursor.close()
+    return jsonify(names)
+    
 def get_study_dao(study):
     studyDAO = StudyDAO(
         study_instance_uid=study[0],

@@ -69,3 +69,8 @@ CREATE TABLE IF NOT EXISTS annotations (
     FOREIGN KEY (image_uid) REFERENCES images(image_uid)
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+

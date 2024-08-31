@@ -399,13 +399,13 @@ function saveDrawing2(basePath1) {
 }
 
 function saveDrawing3(basePath1) {
-
+    let currentUserName = localStorage.getItem('selectedName')
     basePath1 = basePath1.slice(0, -1);
-    const lastSlashIndex = basePath1.lastIndexOf('\\');
+    const lastSlashIndex = basePath1.lastIndexOf('/');
     let imageUid = basePath1.substring(lastSlashIndex + 1);
     const timestamp = new Date().toISOString().replace(/[:.-]/g, ''); // Replace colons, dots, and hyphens with empty strings
-    const filename = `author_${timestamp}.png`;
-
+    const filename = `${currentUserName}_${timestamp}.png`;
+    console.log(currentUserName);
     const selectedImage = document.getElementById('x-ray-image');
     const sourceImageUrl = selectedImage.getAttribute('data-image-url');
     // Send the data URL, filename, and save directory to the server via a POST request
@@ -419,6 +419,7 @@ function saveDrawing3(basePath1) {
             image_uid:imageUid,
             directory: basePath1,
             source_dir: sourceImageUrl,
+            author: currentUserName,
             points: clicks
         })
     })

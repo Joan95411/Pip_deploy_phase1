@@ -43,6 +43,11 @@
         <button class="previous-button" onclick="previousStudy()"> <a>previous study</a></button>
         <button class="all-studies-button" onclick="backToAllStudies()"> <a>Back to all studies</a></button>
         <button class="next-button" onclick="nextStudy()"> <a>next study</a></button>
+        <div class="user-container" style="text-align: right;">
+            <p id="userName" onclick="showNameModal()" style="cursor: pointer;">
+                <!-- JavaScript will update this text -->
+            </p>
+        </div>
     </header>
     <div class="app" >
 <!--            <b>{{ study.series[0].images[0].fractured_annotated_image_dir }}</b>-->
@@ -85,7 +90,24 @@
                 </div>
             </div>
         </div>
+        <div id="nameModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Select or Add Your Name</h2>
+                <form id="nameForm">
+                    <label for="names">Choose your name:</label>
+                    <select name="selectedName" id="names">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+    
+                    <p>Or add a new name:</p>
+                    <input type="text" name="newName" placeholder="Enter new name">
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
     </div>
     <script src="{{ url_for('static', filename='single-study-view.js') }}"></script>
+    <script src="{{ url_for('static', filename='name-handler.js') }}"></script>
 </body>
 </html>
