@@ -58,7 +58,7 @@
                     <li>
 <!--                         NOTE: THIS NOW ASSUME EACH SERIES ONLY HAVE ONE IMAGE-->
                         <div data-value='{{series.images[0].fractured_annotated_image_dir}}'></div>
-                        <button id="first-button" onclick="displayPrototypesAndImages('{{ series.images[0].prototypes_to_json() }}', '{{ series.images[0].fractured_annotated_image_dir}}')">
+                        <button id="first-button" data-image-id="{{ series.images[0].image_uid }}" onclick="displayPrototypesAndImages('{{ series.images[0].prototypes_to_json() }}', '{{ series.images[0].fractured_annotated_image_dir}}')">
                          <b>{{ series.images[0].image_uid[-7:] }}</b> <br>
                             Predicted class: {{series.images[0].predicted_class.value}} <br>
                             Fractured weight: {{series.images[0].fractured_sim_weight}} <br>
