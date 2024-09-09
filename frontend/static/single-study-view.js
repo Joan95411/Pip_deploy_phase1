@@ -292,7 +292,7 @@ async function fetchAnnotationsByImageUID(imageUID) {
 var clicks = [];
 var canvas, context, imageObj;
 
-async function addNewPrototype(basePath1) {
+async function addNewPrototype(basePath1, fracturedImagePath) {
     const addPrototypeButton = document.querySelector('.add-prototype-button');
 
     // Check if we're in the process of drawing
