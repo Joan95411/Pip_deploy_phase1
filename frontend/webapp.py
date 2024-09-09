@@ -412,7 +412,7 @@ def save_drawing3():
 
         drawing_thread = threading.Thread(target=draw_polygon, args=(annotation_id,))
         drawing_thread.start()
-        return jsonify({"success": True})
+        return jsonify({"success": True, "annotation": annotation_id})
     except Exception as e:
         print(f"Error saving to database: {e}")
         return jsonify({"success": False, "error": str(e)})

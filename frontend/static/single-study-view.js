@@ -43,7 +43,7 @@ async function displayPrototypesAndImages(prototypes_json, fracturedImagePath) {
     let basePath1 = basePath.substring(0, lastSlashIndex1 + 1);
 
     await displayImage( fracturedImagePath);
-    await displayPrototypes(prototypes_json,basePath1);
+    await displayPrototypes(prototypes_json,basePath1,fracturedImagePath);
 
     const showOriginalButton = document.getElementById('show-original-button');
     const newButton = showOriginalButton.cloneNode(true);  // Clone the button to remove all event listeners
@@ -91,7 +91,7 @@ function removeCanvas() {
     }
     }
 }
-async function displayPrototypes(prototypes_json,basePath1) {
+async function displayPrototypes(prototypes_json,basePath1,fracturedImagePath) {
 
     const prototypes = JSON.parse(prototypes_json); // Parse the JSON string into an array
     const prototypesBar = document.getElementById('prototypes-bar');
@@ -170,7 +170,7 @@ async function displayPrototypes(prototypes_json,basePath1) {
     addPrototypeButton.textContent = 'Add Prototype';
     addPrototypeButton.classList.add('add-prototype-button');
     addPrototypeButton.addEventListener('click', function () {
-        addNewPrototype(basePath1);
+        addNewPrototype(basePath1, fracturedImagePath);
     });
     // Append the button below the table
     prototypesBar.appendChild(addPrototypeButton);
@@ -201,6 +201,7 @@ async function displayPrototypes(prototypes_json,basePath1) {
         const annotationCellID = annotationRow.insertCell();
         const idButton = document.createElement('button');
         idButton.textContent = annotation.id;
+        idButton.id='ano'+annotation.id;
         idButton.addEventListener('click', function () {
             displayAnnotatedImage(annotation.dir);  // Function to handle image display
         });
@@ -291,7 +292,7 @@ async function fetchAnnotationsByImageUID(imageUID) {
 var clicks = [];
 var canvas, context, imageObj;
 
-function addNewPrototype(basePath1) {
+async function addNewPrototype(basePath1) {
     const addPrototypeButton = document.querySelector('.add-prototype-button');
 
     // Check if we're in the process of drawing
@@ -311,7 +312,7 @@ function addNewPrototype(basePath1) {
     if (existingCanvas) {
         imageDisplay.removeChild(existingCanvas);
     }
-
+    await displayOriginalImage(fracturedImagePath);
     // Create a new canvas element
     canvas = document.createElement('canvas');
     canvas.id = 'drawing-canvas';
@@ -401,7 +402,7 @@ function saveDrawing2(basePath1) {
 function saveDrawing3(basePath1) {
     let currentUserName = localStorage.getItem('selectedName')
     basePath1 = basePath1.slice(0, -1);
-    const lastSlashIndex = basePath1.lastIndexOf('/');
+    const lastSlashIndex = basePath1.lastIndexOf('\\');
     let imageUid = basePath1.substring(lastSlashIndex + 1);
     const timestamp = new Date().toISOString().replace(/[:.-]/g, ''); // Replace colons, dots, and hyphens with empty strings
     const filename = `${currentUserName}_${timestamp}.png`;
@@ -427,9 +428,23 @@ function saveDrawing3(basePath1) {
     .then(data => {
         if (data.success) {
             console.log('Drawing saved successfully on the server.');
-        } else {
+            const button = document.querySelector(`button[data-image-id="${imageUid}"]`);
+            if (button) {
+                button.click();
+                alert('Your annotation has been saved successfully! Check the new one in the list.')
+                setTimeout(() => {
+                if (data.annotation) {
+                    const annotationId = data.annotation; // Adjust if necessary
+                    const anobutton = document.querySelector(`button[id="ano${annotationId}"]`);
+                    if (anobutton) {
+                        anobutton.click();
+                    } else {
+                        console.log('Button not found:', `ano${annotationId}`);
+                    }
+                }
+            }, 500);} else {
             console.error('Failed to save drawing on the server.');
-        }
+        }}
     })
     .catch(error => {
         console.error('Error while saving drawing:', error);
