@@ -12,12 +12,13 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
 LISTENING_PATH_rela = "pukkaJ-in"
-MODEL_DIR_rela = "model/checkpoints/net_trained_last"
+MODEL_DIR_rela = "model/checkpoints/net_trained_last_hiprun7"
 LISTENING_PATH = os.path.join(BASE_DIR, LISTENING_PATH_rela)
 MODEL_DIR  = os.path.join(BASE_DIR, MODEL_DIR_rela)
-STUDIED_PATH=os.path.join(BASE_DIR, 'studied')
+STUDIED_PATH=os.path.join(BASE_DIR, 'runs')
 
-ABSTAIN_THRESHOLD = {HipFractureEnum.Fractured: 2.6641653403285863,
+ABSTAIN_THRESHOLD = {HipFractureEnum.TrochFractured: 2.6641653403285863,
+                    HipFractureEnum.ColumFractured: 2.6641653403285863,
                      HipFractureEnum.NonFractured: 3.953101319007754}
 
 
@@ -92,14 +93,19 @@ def create_prototypes_directory(directory: str, image_metadata_list: list):
     for image_metadata in image_metadata_list:
         file_path_non_fractured = os.path.join(directory, image_metadata.series_instance_uid, image_metadata.image_uid,
                                                "non_fractured")
-        file_path_fractured = os.path.join(directory, image_metadata.series_instance_uid, image_metadata.image_uid,
-                                           "fractured")
+        file_path_troch_fractured = os.path.join(directory, image_metadata.series_instance_uid, image_metadata.image_uid,
+                                           "troch_fractured")
+        file_path_colum_fractured = os.path.join(directory, image_metadata.series_instance_uid,
+                                                 image_metadata.image_uid,
+                                                 "colum_fractured")
         file_path_abstain = os.path.join(directory, image_metadata.series_instance_uid, image_metadata.image_uid,
                                          "abstain")
         if not os.path.exists(file_path_non_fractured):
             os.makedirs(file_path_non_fractured)
-        if not os.path.exists(file_path_fractured):
-            os.makedirs(file_path_fractured)
+        if not os.path.exists(file_path_troch_fractured):
+            os.makedirs(file_path_troch_fractured)
+        if not os.path.exists(file_path_colum_fractured):
+            os.makedirs(file_path_colum_fractured)
         if not os.path.exists(file_path_abstain):
             os.makedirs(file_path_abstain)
 
@@ -127,12 +133,14 @@ def get_study_sql_query(study: HipFractureStudy):
     sql = "INSERT INTO study (study_uid, accession_number, study_directory, " \
           "study_description, predicted_class, RADPEER_score, study_date, study_comment) " \
           "VALUES (%s, %s ,%s, %s, %s, %s, %s, %s)"
-    if study.predicted_class == HipFractureEnum.Fractured:
+    if study.predicted_class == HipFractureEnum.ColumFractured:
+        study_predicted_class = 0
+    elif study.predicted_class == HipFractureEnum.TrochFractured:
         study_predicted_class = 1
     elif study.predicted_class == HipFractureEnum.NonFractured:
-        study_predicted_class = 0
-    else:
         study_predicted_class = 2
+    else:
+        study_predicted_class = 3
     val = (study.study_instance_uid, study.accession_number, study.study_dir, study.study_description,
            study_predicted_class, study.RADPEER_score, study.study_date, study.study_comment)
     return sql, val
@@ -142,12 +150,14 @@ def get_series_sql_query(series, study_uid):
     sql = "INSERT INTO series (series_uid, series_directory, series_description, study_uid, predicted_class) " \
           "VALUES (%s, %s, %s, %s, %s)"
 
-    if series.predicted_class == HipFractureEnum.Fractured:
+    if series.predicted_class == HipFractureEnum.ColumFractured:
+        series_predicted_class = 0
+    elif series.predicted_class == HipFractureEnum.TrochFractured:
         series_predicted_class = 1
     elif series.predicted_class == HipFractureEnum.NonFractured:
-        series_predicted_class = 0
-    else:
         series_predicted_class = 2
+    else:
+        series_predicted_class = 3
 
     val = (series.series_instance_uid, series.series_dir, series.series_description, study_uid,
            series_predicted_class)
@@ -155,32 +165,36 @@ def get_series_sql_query(series, study_uid):
 
 
 def get_images_sql_query(image: HipFractureImage, series_uid):
-    if image.predicted_class == HipFractureEnum.Fractured:
+    if image.predicted_class == HipFractureEnum.ColumFractured:
+        image_predicted_class = 0
+    elif image.predicted_class == HipFractureEnum.TrochFractured:
         image_predicted_class = 1
     elif image.predicted_class == HipFractureEnum.NonFractured:
-        image_predicted_class = 0
-    else:
         image_predicted_class = 2
+    else:
+        image_predicted_class = 3
 
     sql = "INSERT INTO images (image_uid, image_directory, series_uid, predicted_class, " \
-          "fractured_annotated_image_directory, non_fractured_annotated_image_directory, " \
-          "fractured_sim_weight, non_fractured_sim_weight, manual_annotated_coordinates) " \
-          "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+          "troch_fractured_annotated_image_directory,colum_fractured_annotated_image_directory, non_fractured_annotated_image_directory, " \
+          "troch_fractured_sim_weight,colum_fractured_sim_weight ,non_fractured_sim_weight, manual_annotated_coordinates) " \
+          "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,%s,%s)"
 
     val = (image.image_uid, image.image_dir, series_uid, image_predicted_class,
-           image.fractured_annotated_image_dir, image.non_fractured_annotated_image_dir,
-           image.sim_weight_fractured, image.sim_weight_non_fractured, 0)
+           image.troch_fractured_annotated_image_dir, image.colum_fractured_annotated_image_dir,image.non_fractured_annotated_image_dir,
+           image.sim_weight_troch_fractured, image.sim_weight_colum_fractured,image.sim_weight_non_fractured, 0)
 
     return sql, val
 
 
 def get_prototypes_sql_query(prototype, image_uid):
-    if prototype.predicted_class == HipFractureEnum.Fractured:
+    if prototype.predicted_class == HipFractureEnum.ColumFractured:
+        prototype_predicted_class = 0
+    elif prototype.predicted_class == HipFractureEnum.TrochFractured:
         prototype_predicted_class = 1
     elif prototype.predicted_class == HipFractureEnum.NonFractured:
-        prototype_predicted_class = 0
-    else:
         prototype_predicted_class = 2
+    else:
+        prototype_predicted_class = 3
 
     sql = "INSERT INTO prototypes (prototype_uid, prototype_image_directory, image_uid, " \
           "sim_weight, similarities, predicted_class, flagged_error, manual," \
