@@ -135,7 +135,9 @@ class PIPNetInference:
         for pred_class_idx in sorted_output_layer_indices:
             # Convention: 0 is fractured, 1 is non-fractured
             if int(pred_class_idx) == 0:
-                pred_class = HipFractureEnum.Fractured
+                pred_class = HipFractureEnum.ColumFractured
+            elif int(pred_class_idx) == 1:
+                pred_class = HipFractureEnum.TrochFractured
             else:
                 pred_class = HipFractureEnum.NonFractured
 
@@ -204,7 +206,9 @@ class PIPNetInference:
 
         for pred_class_idx in sorted_output_layer_indices:
             if int(pred_class_idx) == 0:
-                pred_class = HipFractureEnum.Fractured
+                pred_class = HipFractureEnum.ColumFractured
+            elif int(pred_class_idx) == 1:
+                pred_class = HipFractureEnum.TrochFractured
             else:
                 pred_class = HipFractureEnum.NonFractured
 
@@ -219,11 +223,6 @@ class PIPNetInference:
                     max_idx_h = max_idx_h[max_idx_w].item()
                     max_idx_w = max_idx_w.item()
 
-                    h_coor_min, h_coor_max, w_coor_min, w_coor_max = get_img_coordinates(
-                        self.args.get_arg('image_size'),
-                        softmax_layer.shape,
-                        patch_size,
-                        skip, max_idx_h, max_idx_w)
                     # Calculate bounding box coordinates relative to the original image
                     scale_w = original_width / resized_width
                     scale_h = original_height / resized_height
