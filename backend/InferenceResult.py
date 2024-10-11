@@ -26,12 +26,14 @@ class HipFractureEnum(Enum):
     An inference can be classified as fractured, non-fractured or abstain.
     From the model: Fractured = 0, NonFractured = 1
     """
-    Fractured = "Fractured"
+    ColumFractured ="Column Fractured"
+    TrochFractured = "Trochanteric Fractured"
     NonFractured = "Not Fractured"
     Abstain = "Abstain"
 
 
-ABSTAIN_THRESHOLD = {HipFractureEnum.Fractured: 2.6641653403285863,
+ABSTAIN_THRESHOLD = {HipFractureEnum.TrochFractured: 2.6641653403285863,
+                    HipFractureEnum.ColumFractured: 2.6641653403285863,
                      HipFractureEnum.NonFractured: 3.953101319007754}
 
 
@@ -56,9 +58,15 @@ class AbstractHipFracturePrototype(ABC):
         :param parent_image_dir: Parent image directory
         :param image_name: Name of the image
         """
-        if self.predicted_class == HipFractureEnum.Fractured:
+        if self.predicted_class == HipFractureEnum.TrochFractured:
             self.prototype_image_directory = os.path.join(parent_image_dir,
-                                                          "fractured",
+                                                          "troch_fractured",
+                                                          # image_name.strip(".jpg") +
+                                                          "prototype_" + str(self.prototype_index) + ".jpg")
+            self.prototype_image.save(self.prototype_image_directory)
+        elif self.predicted_class == HipFractureEnum.ColumFractured:
+            self.prototype_image_directory = os.path.join(parent_image_dir,
+                                                          "colum_fractured",
                                                           # image_name.strip(".jpg") +
                                                           "prototype_" + str(self.prototype_index) + ".jpg")
             self.prototype_image.save(self.prototype_image_directory)
@@ -102,9 +110,14 @@ class ManualHipFracturePrototype(AbstractHipFracturePrototype):
         :param parent_image_dir: Parent image directory
         :param image_name: Name of the image
         """
-        if self.predicted_class == HipFractureEnum.Fractured:
+        if self.predicted_class == HipFractureEnum.TrochFractured:
             self.prototype_image_directory = os.path.join(parent_image_dir,
-                                                          "fractured", image_name.strip(".jpg") +
+                                                          "troch_fractured", image_name.strip(".jpg") +
+                                                          "-prototype_manual" + ".jpg")
+            self.prototype_image.save(self.prototype_image_directory)
+        if self.predicted_class == HipFractureEnum.ColumFractured:
+            self.prototype_image_directory = os.path.join(parent_image_dir,
+                                                          "colum_fractured", image_name.strip(".jpg") +
                                                           "-prototype_manual" + ".jpg")
             self.prototype_image.save(self.prototype_image_directory)
         elif self.predicted_class == HipFractureEnum.NonFractured:
@@ -151,12 +164,14 @@ class HipFractureImage:
         """
         self.prototypes = prototypes
         self.original_image = original_image
-        self.fractured_image = self.__draw_prototypes__(HipFractureEnum.Fractured)
+        self.troch_fractured_image = self.__draw_prototypes__(HipFractureEnum.TrochFractured)
+        self.colum_fractured_image = self.__draw_prototypes__(HipFractureEnum.ColumFractured)
         self.non_fractured_image = self.__draw_prototypes__(HipFractureEnum.NonFractured)
-        self.sim_weight_fractured, self.sim_weight_non_fractured = self.__get_sim_weights__()
+        self.sim_weight_troch_fractured, self.sim_weight_colum_fractured, self.sim_weight_non_fractured = self.__get_sim_weights__()
         self.predicted_class = self.__get_predicted_class__()
         self.image_dir = None
-        self.fractured_annotated_image_dir = None
+        self.troch_fractured_annotated_image_dir = None
+        self.colum_fractured_annotated_image_dir = None
         self.non_fractured_annotated_image_dir = None
         self.manually_annotated_prototype = None
         self.image_uid = None
@@ -180,9 +195,14 @@ class HipFractureImage:
         if self.__check_abstain__():
             return HipFractureEnum.Abstain
         else:
-            return HipFractureEnum.Fractured \
-                if self.sim_weight_fractured > self.sim_weight_non_fractured \
-                else HipFractureEnum.NonFractured
+            # Dictionary of similarity weights
+            weights = {
+                HipFractureEnum.TrochFractured: self.sim_weight_troch_fractured,
+                HipFractureEnum.ColumFractured: self.sim_weight_colum_fractured,
+                HipFractureEnum.NonFractured: self.sim_weight_non_fractured
+            }
+            # Return the class with the highest weight
+            return max(weights, key=weights.get)
 
     def __check_abstain__(self):
         """
@@ -195,15 +215,18 @@ class HipFractureImage:
         return True
 
     def __get_sim_weights__(self):
-        sim_weight_fractured = 0
+        sim_weight_troch_fractured = 0
+        sim_weight_colum_fractured = 0
         sim_weight_non_fractured = 0
 
         for prototype in self.prototypes:
-            if prototype.predicted_class == HipFractureEnum.Fractured:
-                sim_weight_fractured += prototype.similarity_weight
+            if prototype.predicted_class == HipFractureEnum.TrochFractured:
+                sim_weight_troch_fractured += prototype.similarity_weight
+            elif prototype.predicted_class == HipFractureEnum.ColumFractured:
+                sim_weight_colum_fractured += prototype.similarity_weight
             else:
                 sim_weight_non_fractured += prototype.similarity_weight
-        return sim_weight_fractured, sim_weight_non_fractured
+        return sim_weight_troch_fractured, sim_weight_colum_fractured,sim_weight_non_fractured
 
     def get_prototypes(self, fracture_class: HipFractureEnum):
         prototypes = []
@@ -212,10 +235,12 @@ class HipFractureImage:
                 prototypes.append(prototype)
         return prototypes
 
+
     def __draw_prototypes__(self, fracture_class: HipFractureEnum):
         image = self.original_image.copy()
         draw = ImageDraw.Draw(image)
         for prototype in self.get_prototypes(fracture_class):
+            print(prototype.predicted_class,prototype.prototype_index)
             color = 'white'
             draw.point(prototype.coordinates[0], fill=color)
             draw.point(prototype.coordinates[1], fill=color)
@@ -233,11 +258,14 @@ class HipFractureImage:
         self.image_uid = img_name
         self.image_dir = image_dir + img_name + ".jpg"
 
-        self.fractured_annotated_image_dir = os.path.join(image_dir, "fractured",
-                                                          img_name + "-fractured.jpg")
+        self.troch_fractured_annotated_image_dir = os.path.join(image_dir, "troch_fractured",
+                                                                img_name + "-troch_fractured.jpg")
+        self.colum_fractured_annotated_image_dir = os.path.join(image_dir, "colum_fractured",
+                                                                img_name + "-colum_fractured.jpg")
         self.non_fractured_annotated_image_dir = os.path.join(image_dir, "non_fractured",
                                                               img_name + "-non_fractured.jpg")
-        self.fractured_image.save(self.fractured_annotated_image_dir)
+        self.troch_fractured_image.save(self.troch_fractured_annotated_image_dir)
+        self.colum_fractured_image.save(self.troch_fractured_annotated_image_dir)
         self.non_fractured_image.save(self.non_fractured_annotated_image_dir)
         for prototype in self.prototypes:
             prototype.save_prototype_image(image_dir, img_name)
@@ -250,7 +278,8 @@ class HipFractureSeries:
         self.series_description = series_description
         self.predicted_class = HipFractureEnum.NonFractured
         self.images = []
-        self.weight_fractured = None
+        self.weight_troch_fractured = None
+        self.weight_colum_fractured = None
         self.weight_non_fractured = None
 
     def add_image(self, image: HipFractureImage):
@@ -266,8 +295,13 @@ class HipFractureSeries:
         for image in self.images:
             if image.predicted_class != HipFractureEnum.Abstain:
                 abstain = False
-                if image.predicted_class == HipFractureEnum.Fractured:
-                    self.predicted_class = HipFractureEnum.Fractured
+                if image.predicted_class == HipFractureEnum.TrochFractured:
+                    self.predicted_class = HipFractureEnum.TrochFractured
+                    print('troch-fractured')
+                    return
+                if image.predicted_class == HipFractureEnum.ColumFractured:
+                    self.predicted_class = HipFractureEnum.ColumFractured
+                    print('colum-fractured')
                     return
         if abstain:
             self.predicted_class = HipFractureEnum.Abstain
@@ -298,8 +332,11 @@ class HipFractureStudy:
             series.get_predicted_class()
             if series.predicted_class != HipFractureEnum.Abstain:
                 abstain = False
-                if series.predicted_class == HipFractureEnum.Fractured:
-                    self.predicted_class = HipFractureEnum.Fractured
+                if series.predicted_class == HipFractureEnum.TrochFractured:
+                    self.predicted_class = HipFractureEnum.TrochFractured
+                    return
+                if series.predicted_class == HipFractureEnum.ColumFractured:
+                    self.predicted_class = HipFractureEnum.ColumFractured
                     return
         if abstain:
             self.predicted_class = HipFractureEnum.Abstain
